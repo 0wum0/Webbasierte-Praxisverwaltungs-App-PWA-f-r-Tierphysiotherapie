@@ -76,21 +76,21 @@ function isMonologAvailable(): bool
 }
 
 // ============================================================================
-// SCHRITT 4: Monolog-Logger (wenn verfügbar)
+// SCHRITT 4: Logger-Implementierung basierend auf Verfügbarkeit
 // ============================================================================
 
 if (isMonologAvailable()) {
-    use Monolog\Logger;
-    use Monolog\Handler\StreamHandler;
-    use Monolog\Formatter\LineFormatter;
-
+    // ========================================================================
+    // Monolog ist verfügbar - professionelles Logging verwenden
+    // ========================================================================
+    
     /**
      * Erstellt und konfiguriert einen Monolog-Logger (Singleton-Pattern)
      * 
      * @param string $name Name des Loggers (z.B. 'app', 'db', 'auth')
-     * @return Logger Monolog Logger Instanz
+     * @return \Monolog\Logger Monolog Logger Instanz
      */
-    function getLogger(string $name = 'app'): Logger
+    function getLogger(string $name = 'app'): \Monolog\Logger
     {
         static $loggers = [];
         
@@ -99,17 +99,23 @@ if (isMonologAvailable()) {
             return $loggers[$name];
         }
         
-        $logger = new Logger($name);
+        $logger = new \Monolog\Logger($name);
         $logDir = ensureLogDirectory();
         
-        // Handler für normale Logs (app.log)
-        $appHandler = new StreamHandler($logDir . '/app.log', Logger::DEBUG);
+        // Handler für normale Logs (app.log) - Info-Level und höher
+        $appHandler = new \Monolog\Handler\StreamHandler(
+            $logDir . '/app.log', 
+            \Monolog\Logger::DEBUG
+        );
         
-        // Handler für Fehler (error.log)
-        $errorHandler = new StreamHandler($logDir . '/error.log', Logger::ERROR);
+        // Handler für Fehler (error.log) - nur Error-Level und höher
+        $errorHandler = new \Monolog\Handler\StreamHandler(
+            $logDir . '/error.log', 
+            \Monolog\Logger::ERROR
+        );
         
         // Custom Formatter: Lesbares Format mit Zeitstempel
-        $formatter = new LineFormatter(
+        $formatter = new \Monolog\Formatter\LineFormatter(
             "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n",
             'Y-m-d H:i:s',
             true,  // allowInlineLineBreaks
@@ -130,25 +136,39 @@ if (isMonologAvailable()) {
     }
 
     /**
-     * Logging-Funktionen mit Monolog
-     * Diese Funktionen sind die öffentliche API für die Anwendung
+     * Schreibt eine Fehler-Nachricht ins Log
+     * Verwendet Monolog ERROR Level
+     * Schreibt sowohl in app.log als auch error.log
      */
-    
     function logError(string $message, array $context = []): void
     {
         getLogger()->error($message, $context);
     }
 
+    /**
+     * Schreibt eine Warnung ins Log
+     * Verwendet Monolog WARNING Level
+     */
     function logWarning(string $message, array $context = []): void
     {
         getLogger()->warning($message, $context);
     }
 
+    /**
+     * Schreibt eine Info-Nachricht ins Log
+     * Verwendet Monolog INFO Level
+     * Für allgemeine informative Nachrichten
+     */
     function logInfo(string $message, array $context = []): void
     {
         getLogger()->info($message, $context);
     }
 
+    /**
+     * Schreibt eine Debug-Nachricht ins Log
+     * Verwendet Monolog DEBUG Level
+     * Für detaillierte Debugging-Informationen
+     */
     function logDebug(string $message, array $context = []): void
     {
         getLogger()->debug($message, $context);
@@ -156,24 +176,24 @@ if (isMonologAvailable()) {
 
 } else {
     // ========================================================================
-    // SCHRITT 5: Fallback-Logger (einfache Datei-basierte Lösung)
+    // FALLBACK: Einfacher Datei-Logger ohne Monolog
     // ========================================================================
     
     /**
-     * Fallback: Einfacher Datei-Logger ohne Monolog
-     * Schreibt Logs direkt mit file_put_contents
+     * Fallback: Schreibt Log-Nachricht direkt in Datei
+     * Verwendet file_put_contents mit Timestamp-Format
      * 
      * @param string $level Log-Level (ERROR, WARNING, INFO, DEBUG)
      * @param string $message Log-Nachricht
      * @param array $context Zusätzlicher Kontext (wird als JSON gespeichert)
-     * @param string $filename Dateiname (app.log oder error.log)
+     * @param string $filename Dateiname für Log-Ausgabe
      */
-    function writeSimpleLog(string $level, string $message, array $context = [], string $filename = 'app.log'): void
+    function writeSimpleLog(string $level, string $message, array $context = [], string $filename = 'info.log'): void
     {
         $logDir = ensureLogDirectory();
         $logFile = $logDir . '/' . $filename;
         
-        // Zeitstempel formatieren
+        // Zeitstempel formatieren (deutsches Format)
         $timestamp = date('Y-m-d H:i:s');
         
         // Kontext-Daten als JSON formatieren (falls vorhanden)
@@ -183,41 +203,57 @@ if (isMonologAvailable()) {
         $logLine = "[$timestamp] app.$level: $message$contextStr\n";
         
         // In Datei schreiben (FILE_APPEND = anhängen statt überschreiben)
+        // LOCK_EX verhindert gleichzeitige Schreibzugriffe
         file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
     }
 
     /**
-     * Fallback-Logging-Funktionen (gleiche API wie Monolog-Version)
+     * Schreibt eine Fehler-Nachricht ins Log (Fallback-Version)
+     * Schreibt in error.log für Fehlertracking
      */
-    
     function logError(string $message, array $context = []): void
     {
-        // Fehler gehen sowohl nach app.log als auch error.log
-        writeSimpleLog('ERROR', $message, $context, 'app.log');
+        // Fehler werden in error.log gespeichert
         writeSimpleLog('ERROR', $message, $context, 'error.log');
     }
 
+    /**
+     * Schreibt eine Warnung ins Log (Fallback-Version)
+     * Schreibt in info.log
+     */
     function logWarning(string $message, array $context = []): void
     {
-        writeSimpleLog('WARNING', $message, $context);
+        writeSimpleLog('WARNING', $message, $context, 'info.log');
     }
 
+    /**
+     * Schreibt eine Info-Nachricht ins Log (Fallback-Version)
+     * Schreibt in info.log für allgemeine Informationen
+     */
     function logInfo(string $message, array $context = []): void
     {
-        writeSimpleLog('INFO', $message, $context);
+        writeSimpleLog('INFO', $message, $context, 'info.log');
     }
 
+    /**
+     * Schreibt eine Debug-Nachricht ins Log (Fallback-Version)
+     * Schreibt in info.log
+     */
     function logDebug(string $message, array $context = []): void
     {
-        writeSimpleLog('DEBUG', $message, $context);
+        writeSimpleLog('DEBUG', $message, $context, 'info.log');
     }
     
     /**
-     * Dummy-Funktion für Kompatibilität
-     * Im Fallback-Modus gibt es keine Logger-Instanzen
+     * Kompatibilitäts-Funktion für Code der getLogger() erwartet
+     * Gibt ein Objekt mit den gleichen Methoden wie Monolog\Logger zurück
+     * 
+     * @param string $name Name des Loggers (wird im Fallback ignoriert)
+     * @return object Logger-ähnliches Objekt mit error(), warning(), info(), debug() Methoden
      */
     function getLogger(string $name = 'app'): object
     {
+        // Anonyme Klasse die Logger-Interface nachbildet
         return new class {
             public function error(string $message, array $context = []): void {
                 logError($message, $context);
@@ -236,12 +272,15 @@ if (isMonologAvailable()) {
 }
 
 // ============================================================================
-// INITIALISIERUNG: Logging-System ist bereit
+// INITIALISIERUNG: Logger-System bereit
 // ============================================================================
 
-// Log-Meldung zur Bestätigung der erfolgreichen Initialisierung
+// Initiale Log-Meldung zur Bestätigung der erfolgreichen Initialisierung
+// Diese Meldung zeigt welcher Logger-Modus aktiv ist
 if (isMonologAvailable()) {
-    logDebug('Logger initialized with Monolog support');
+    // Monolog verfügbar - professionelles Logging aktiv
+    logDebug('Logger initialisiert mit Monolog-Unterstützung');
 } else {
-    logDebug('Logger initialized with fallback mode (Monolog not available)');
+    // Fallback-Modus aktiv - einfaches File-Logging
+    logDebug('Logger initialisiert im Fallback-Modus (Monolog nicht verfügbar)');
 }
