@@ -1,66 +1,55 @@
 {% extends "layout.twig" %}
 
 {% block content %}
-<div class="row row-cols-1 row-cols-lg-2 row-cols-xl-4">
-    <!-- Finanzübersicht -->
-    <div class="col">
-        <div class="card radius-10">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div>
-                        <p class="mb-0">Diesen Monat</p>
-                        <h4 class="my-1">{{ incomeMonth|number_format(2, ',', '.') }} €</h4>
-                    </div>
-                    <div class="widgets-icons bg-light-primary text-primary ms-auto">
-                        <i class='bx bxs-wallet'></i>
-                    </div>
-                </div>
-            </div>
+<!-- Dashboard Header -->
+<div class="dashboard-header mb-4">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <p class="dashboard-subtitle">Willkommen zurück im Tierphysio Manager</p>
+</div>
+
+<!-- Stats Grid with New Design -->
+<div class="stats-grid">
+    <!-- Monthly Income -->
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class='bx bxs-wallet'></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ incomeMonth|number_format(2, ',', '.') }} €</div>
+            <div class="stat-label">Diesen Monat</div>
         </div>
     </div>
-    <div class="col">
-        <div class="card radius-10">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div>
-                        <p class="mb-0">Dieses Jahr</p>
-                        <h4 class="my-1">{{ incomeYear|number_format(2, ',', '.') }} €</h4>
-                    </div>
-                    <div class="widgets-icons bg-light-info text-info ms-auto">
-                        <i class='bx bx-calendar'></i>
-                    </div>
-                </div>
-            </div>
+    
+    <!-- Yearly Income -->
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class='bx bx-calendar'></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ incomeYear|number_format(2, ',', '.') }} €</div>
+            <div class="stat-label">Dieses Jahr</div>
         </div>
     </div>
-    <div class="col">
-        <div class="card radius-10">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div>
-                        <p class="mb-0">Gesamt Einnahmen</p>
-                        <h4 class="my-1">{{ totalIncome|number_format(2, ',', '.') }} €</h4>
-                    </div>
-                    <div class="widgets-icons bg-light-success text-success ms-auto">
-                        <i class='bx bx-line-chart'></i>
-                    </div>
-                </div>
-            </div>
+    
+    <!-- Total Income -->
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <i class='bx bx-line-chart'></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ totalIncome|number_format(2, ',', '.') }} €</div>
+            <div class="stat-label">Gesamt Einnahmen</div>
         </div>
     </div>
-    <div class="col">
-        <div class="card radius-10">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div>
-                        <p class="mb-0">Offene Rechnungen</p>
-                        <h4 class="my-1 text-danger">{{ totalExpenses|number_format(2, ',', '.') }} €</h4>
-                    </div>
-                    <div class="widgets-icons bg-light-danger text-danger ms-auto">
-                        <i class='bx bx-error-circle'></i>
-                    </div>
-                </div>
-            </div>
+    
+    <!-- Open Invoices -->
+    <div class="stat-card">
+        <div class="stat-icon error">
+            <i class='bx bx-error-circle'></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value text-error">{{ totalExpenses|number_format(2, ',', '.') }} €</div>
+            <div class="stat-label">Offene Rechnungen</div>
         </div>
     </div>
 </div>
@@ -70,47 +59,68 @@
 {% endif %}
 
 <div class="row mt-4">
-    <!-- Termine heute -->
+    <!-- Today's Appointments -->
     <div class="col-xl-6 d-flex">
-        <div class="card radius-10 w-100">
-            <div class="card-header bg-transparent border-0">
-                <h5 class="mb-0">📅 Heutige Termine</h5>
+        <div class="card w-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📅 Heutige Termine</h5>
             </div>
-            <ul class="list-group list-group-flush">
-                {% for appt in appointmentsToday %}
-                    <li class="list-group-item">
-                        <a href="javascript:void(0);" class="open-patient-modal" data-patient="{{ appt.patient_id }}">
-                            {{ appt.appointment_date|date("H:i") }} – {{ appt.patient_name }} ({{ appt.firstname }} {{ appt.lastname }})
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="list-group-item">Keine Termine heute</li>
-                {% endfor %}
-            </ul>
+            <div class="card-body">
+                <div class="appointments-list">
+                    {% for appt in appointmentsToday %}
+                        <div class="appointment-item">
+                            <a href="javascript:void(0);" class="open-patient-modal appointment-link" data-patient="{{ appt.patient_id }}">
+                                <span class="appointment-time">{{ appt.appointment_date|date("H:i") }}</span>
+                                <span class="appointment-details">
+                                    <strong>{{ appt.patient_name }}</strong>
+                                    <small class="text-muted">({{ appt.firstname }} {{ appt.lastname }})</small>
+                                </span>
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">Keine Termine heute</p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Geburtstage heute -->
+    <!-- Today's Birthdays -->
     <div class="col-xl-6 d-flex">
-        <div class="card radius-10 w-100">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">🎂 Geburtstage heute</h5>
-                {% if birthdayOwners or birthdayPatients %}
-                    <a href="dashboard.php?action=send_birthday_mails#birthdays" class="btn btn-sm btn-primary">
-                        ✉️ Geburtstagsmails senden
-                    </a>
-                {% endif %}
+        <div class="card w-100">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">🎂 Geburtstage heute</h5>
+                    {% if birthdayOwners or birthdayPatients %}
+                        <a href="dashboard.php?action=send_birthday_mails#birthdays" class="btn btn-sm btn-primary">
+                            ✉️ Mails senden
+                        </a>
+                    {% endif %}
+                </div>
             </div>
             <div class="card-body">
                 {% if birthdayOwners or birthdayPatients %}
-                    {% for owner in birthdayOwners %}
-                        <p>🎉 Besitzer: {{ owner.firstname }} {{ owner.lastname }}</p>
-                    {% endfor %}
-                    {% for pet in birthdayPatients %}
-                        <p>🐾 Tier: {{ pet.name }} (Besitzer: {{ pet.firstname }} {{ pet.lastname }})</p>
-                    {% endfor %}
+                    <div class="birthday-list">
+                        {% for owner in birthdayOwners %}
+                            <div class="birthday-item">
+                                <span class="birthday-icon">🎉</span>
+                                <span class="birthday-text">
+                                    <strong>Besitzer:</strong> {{ owner.firstname }} {{ owner.lastname }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                        {% for pet in birthdayPatients %}
+                            <div class="birthday-item">
+                                <span class="birthday-icon">🐾</span>
+                                <span class="birthday-text">
+                                    <strong>{{ pet.name }}</strong>
+                                    <small class="text-muted">(Besitzer: {{ pet.firstname }} {{ pet.lastname }})</small>
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
                 {% else %}
-                    <p>Heute hat niemand Geburtstag 🎈</p>
+                    <p class="text-center text-muted py-3">Heute hat niemand Geburtstag 🎈</p>
                 {% endif %}
             </div>
         </div>

@@ -506,10 +506,26 @@ foreach ($permissionStatus as $status) {
     </style>
 </head>
 <body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle-installer" data-theme-toggle aria-label="Toggle theme">🌙</button>
+    
     <div class="installer-container">
         <div class="installer-card">
-            <!-- Progress Indicator -->
-            <div class="step-indicator">
+            <!-- Animated Header -->
+            <div class="installer-header">
+                <h1>
+                    <span class="paw-icon">🐾</span>
+                    Tierphysio Manager Installation
+                </h1>
+                <p>Professionelle Praxisverwaltung einrichten</p>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="installer-progress">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: <?= ($currentStep / 8) * 100 ?>%"></div>
+                </div>
+                <div class="step-indicator mt-3">
                 <?php
                 $steps = [
                     1 => 'Willkommen',
@@ -529,19 +545,14 @@ foreach ($permissionStatus as $status) {
                         $class = 'active';
                     }
                 ?>
-                <div class="step-item <?= $class ?>">
-                    <div class="step-circle">
-                        <?php if ($num < $currentStep): ?>
-                            <i class="bi bi-check"></i>
-                        <?php else: ?>
-                            <?= $num ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="step-label"><?= $label ?></div>
-                </div>
+                <span class="<?= $class ?>"><?= $label ?></span>
                 <?php endforeach; ?>
             </div>
-
+            </div>
+            
+            <!-- Main Installer Body -->
+            <div class="installer-body">
+            
             <!-- Error/Success Messages -->
             <?php if ($error): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -927,8 +938,9 @@ foreach ($permissionStatus as $status) {
                 </div>
             </form>
             <?php endif; ?>
-        </div>
-    </div>
+            </div><!-- End installer-body -->
+        </div><!-- End installer-card -->
+    </div><!-- End installer-container -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
