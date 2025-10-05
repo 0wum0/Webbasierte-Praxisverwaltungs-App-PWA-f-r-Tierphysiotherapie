@@ -1,0 +1,12 @@
+/vendor/
+/logs/*.log
+/logs/*.txt
+/.php-cs-fixer.cache
+/.phpunit.cache
+/.env
+composer.phar
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

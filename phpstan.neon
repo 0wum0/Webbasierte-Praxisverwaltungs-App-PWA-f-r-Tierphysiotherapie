@@ -1,0 +1,16 @@
+parameters:
+    level: 6
+    paths:
+        - includes
+        - api
+        - .
+    excludePaths:
+        - vendor
+        - assets
+        - uploads
+        - invoices
+    ignoreErrors:
+        # Allow dynamic properties on stdClass and PDO
+        - '#Access to an undefined property#'
+    treatPhpDocTypesAsCertain: false
+    checkMissingIterableValueType: false
