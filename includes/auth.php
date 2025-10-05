@@ -273,3 +273,112 @@ function auth_verify_password(string $password, string $hash): bool
 {
     return password_verify($password, $hash);
 }
+
+/**
+ * Admin Login function with proper validation
+ * Returns true on success, false on failure
+ * @param string $email Admin email
+ * @param string $password Plain text password
+ * @param PDO $pdo Database connection
+ * @return bool Success status
+ */
+function admin_login(string $email, string $password, PDO $pdo): bool
+{
+    try {
+        // Admin-User aus DB laden mit case-insensitive email comparison
+        $stmt = $pdo->prepare("
+            SELECT id, email, password_hash, name, is_active, is_super_admin,
+                   failed_login_attempts, locked_until
+            FROM admin_users 
+            WHERE LOWER(email) = LOWER(:email)
+        ");
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            return false;
+        }
+        
+        // Account gesperrt?
+        if ($user['locked_until'] !== null && strtotime($user['locked_until']) > time()) {
+            return false;
+        }
+        
+        // Account aktiv?
+        if (!$user['is_active']) {
+            return false;
+        }
+        
+        // Passwort prüfen mit password_verify
+        if (!password_verify($password, $user['password_hash'])) {
+            // Failed Login zählen
+            $attempts = (int)$user['failed_login_attempts'] + 1;
+            $lockUntil = null;
+            
+            // Nach 5 Versuchen: 15 Minuten sperren
+            if ($attempts >= 5) {
+                $lockUntil = date('Y-m-d H:i:s', time() + 900);
+            }
+            
+            $stmt = $pdo->prepare("
+                UPDATE admin_users 
+                SET failed_login_attempts = :attempts,
+                    locked_until = :locked_until
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                ':attempts' => $attempts,
+                ':locked_until' => $lockUntil,
+                ':id' => $user['id'],
+            ]);
+            
+            return false;
+        }
+        
+        // Rollen laden
+        $stmt = $pdo->prepare("
+            SELECT r.name 
+            FROM admin_roles r
+            JOIN admin_user_roles aur ON r.id = aur.role_id
+            WHERE aur.user_id = :user_id
+        ");
+        $stmt->execute([':user_id' => $user['id']]);
+        $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Login erfolgreich -> Session setzen
+        auth_admin_login((int)$user['id'], $user['email'], $user['name'], $roles);
+        
+        // Login-Info aktualisieren
+        $stmt = $pdo->prepare("
+            UPDATE admin_users 
+            SET last_login = NOW(),
+                last_login_ip = :ip,
+                failed_login_attempts = 0,
+                locked_until = NULL
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            ':id' => $user['id'],
+        ]);
+        
+        // Audit Log
+        $stmt = $pdo->prepare("
+            INSERT INTO audit_log (admin_user_id, action, description, ip_address, user_agent)
+            VALUES (:user_id, 'login', 'Admin login successful', :ip, :user_agent)
+        ");
+        $stmt->execute([
+            ':user_id' => $user['id'],
+            ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            ':user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+        ]);
+        
+        return true;
+    } catch (Exception $e) {
+        logError('Admin login error', [
+            'email' => $email,
+            'error' => $e->getMessage(),
+        ]);
+        return false;
+    }
+}
