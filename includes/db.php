@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 $host = "localhost";
-$db   = "u772175418_ew";   // Datenbankname
-$user = "u772175418_ew";         // Datenbank-Benutzer
-$pass = ":oxpJgE2*";             // Datenbank-Passwort
+$db   = "";   // Datenbankname
+$user = "";         // Datenbank-Benutzer
+$pass = "";             // Datenbank-Passwort
 $charset = "utf8mb4";
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
