@@ -1,0 +1,72 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2>📊 Buchhaltung</h2>
+
+    <!-- Einnahmen & Ausgaben -->
+    <div class="row mb-4 text-center">
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 bg-dark text-light">
+                <h6>Diesen Monat</h6>
+                <p class="fs-4">{{ incomeMonth|number_format(2, ',', '.') }} €</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 bg-dark text-light">
+                <h6>Dieses Jahr</h6>
+                <p class="fs-4">{{ incomeYear|number_format(2, ',', '.') }} €</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 bg-dark text-light">
+                <h6>Ausgaben (Jahr)</h6>
+                <p class="fs-4">{{ expensesYear|number_format(2, ',', '.') }} €</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3 bg-dark text-light">
+                <h6>Gesamtgewinn</h6>
+                <p class="fs-4">{{ (incomeTotal - expensesYear)|number_format(2, ',', '.') }} €</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rechnungsübersicht -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card bg-dark text-light shadow-sm mb-3">
+                <div class="card-header bg-danger">🔴 Offene Rechnungen</div>
+                <ul class="list-group list-group-flush">
+                    {% for inv in openInvoices %}
+                    <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                        #{{ inv.id }} – {{ inv.patient_name }}
+                        <span>{{ inv.amount }} €</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-dark text-light">Keine offenen Rechnungen</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card bg-dark text-light shadow-sm mb-3">
+                <div class="card-header bg-success">🟢 Zuletzt bezahlt</div>
+                <ul class="list-group list-group-flush">
+                    {% for inv in paidInvoices %}
+                    <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                        #{{ inv.id }} – {{ inv.patient_name }}
+                        <span>{{ inv.amount }} €</span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item bg-dark text-light">Noch keine bezahlt</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

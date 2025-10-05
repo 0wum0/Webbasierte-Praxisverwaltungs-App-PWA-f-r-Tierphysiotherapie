@@ -1,0 +1,148 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2>⚙️ Einstellungen</h2>
+
+    {# Fehler #}
+    {% if errors %}
+    <div class="alert alert-danger">
+        <ul>
+            {% for e in errors %}
+            <li>{{ e }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {# Eigene Einstellungen #}
+    <form method="post" class="bg-dark p-3 rounded shadow mb-4">
+        <h4>🔧 Eigene Einstellungen</h4>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Schlüssel</label>
+                <input type="text" name="setting_key" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Wert</label>
+                <input type="text" name="setting_value" class="form-control" required>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">➕ Speichern</button>
+            </div>
+        </div>
+    </form>
+
+    {# SMTP Einstellungen #}
+    <form method="post" class="bg-dark p-3 rounded shadow mb-4">
+        <h4>📧 E-Mail Einstellungen (SMTP)</h4>
+        <div class="mb-3">
+            <label class="form-label">SMTP Host</label>
+            <input type="text" name="smtp_host" class="form-control" value="{{ settingsMap.smtp_host|default('') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">SMTP Port</label>
+            <input type="text" name="smtp_port" class="form-control" value="{{ settingsMap.smtp_port|default('587') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">SMTP Benutzername</label>
+            <input type="text" name="smtp_user" class="form-control" value="{{ settingsMap.smtp_user|default('') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">SMTP Passwort</label>
+            <input type="password" name="smtp_pass" class="form-control" value="{{ settingsMap.smtp_pass|default('') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Absender-Adresse</label>
+            <input type="email" name="smtp_from" class="form-control" value="{{ settingsMap.smtp_from|default('') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Absender-Name</label>
+            <input type="text" name="smtp_from_name" class="form-control" value="{{ settingsMap.smtp_from_name|default('Tierphysio') }}">
+        </div>
+        <button type="submit" class="btn btn-success">💾 Speichern</button>
+    </form>
+
+    {# Rechnungs-Einstellungen #}
+    <form method="post" enctype="multipart/form-data" class="bg-dark p-3 rounded shadow mb-4">
+        <h4>💳 Rechnungs-Einstellungen</h4>
+
+        <div class="mb-3">
+            <label class="form-label">Logo (PNG/JPG, max. 2MB)</label>
+            <input type="file" name="invoice_logo_file" class="form-control">
+            {% if settingsMap.invoice_logo %}
+                <p class="mt-2">Aktuelles Logo:</p>
+                <img src="{{ settingsMap.invoice_logo }}" alt="Logo"
+                     style="max-height:100px; background:#fff; padding:5px; border-radius:6px; box-shadow:0 0 6px rgba(0,0,0,.2);">
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Bankverbindung</label>
+            <textarea name="invoice_bank_details" class="form-control" rows="3">{{ settingsMap.invoice_bank_details|default('IBAN: DE12 3456 7890 1234 5678 00 · BIC: GENODEF1XYZ') }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Zahlungsziel</label>
+            <input type="text" name="invoice_payment_terms" class="form-control" value="{{ settingsMap.invoice_payment_terms|default('14 Tage ab Rechnungsdatum ohne Abzüge') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Standard-Betreff für Rechnungs-Mails</label>
+            <input type="text" name="invoice_mail_subject" class="form-control" value="{{ settingsMap.invoice_mail_subject|default('Ihre Rechnung Nr. [RECHNUNGSNUMMER]') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Standard-Nachricht für Rechnungs-Mails</label>
+            <textarea name="invoice_mail_body" class="form-control" rows="5">{{ settingsMap.invoice_mail_body|default('Sehr geehrte/r [NAME],\n\nim Anhang finden Sie Ihre Rechnung Nr. [RECHNUNGSNUMMER].\n\nMit freundlichen Grüßen\nTierphysio Eileen Wenzel') }}</textarea>
+            <small class="text-muted">Verfügbare Platzhalter: [NAME], [RECHNUNGSNUMMER]</small>
+        </div>
+        <button type="submit" class="btn btn-success">💾 Speichern</button>
+    </form>
+
+    {# Geburtstags-Mail Einstellungen #}
+    <form method="post" class="bg-dark p-3 rounded shadow mb-4">
+        <h4>🎂 Geburtstags-Mail Einstellungen</h4>
+        <div class="mb-3">
+            <label class="form-label">Standard-Betreff</label>
+            <input type="text" name="birthday_mail_subject" class="form-control" value="{{ settingsMap.birthday_mail_subject|default('Alles Gute zum Geburtstag!') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Standard-Nachricht</label>
+            <textarea name="birthday_mail_body" class="form-control" rows="5">{{ settingsMap.birthday_mail_body|default('Liebe/r [NAME],\n\nwir wünschen Ihnen und [TIERNAME] alles Gute zum Geburtstag! 🎉🐾\n\nHerzliche Grüße\nTierphysio Eileen Wenzel') }}</textarea>
+            <small class="text-muted">Verfügbare Platzhalter: [NAME], [TIERNAME]</small>
+        </div>
+        <button type="submit" class="btn btn-success">💾 Speichern</button>
+    </form>
+
+    {# Übersicht aller gespeicherten Einstellungen #}
+    <h4>📋 Alle gespeicherten Einstellungen</h4>
+    <div class="table-responsive">
+        <table class="table table-dark table-striped align-middle shadow-sm">
+            <thead>
+                <tr>
+                    <th>Schlüssel</th>
+                    <th>Wert</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in settings %}
+                <tr>
+                    <td>{{ s.setting_key }}</td>
+                    <td>
+                        {% if s.setting_key == 'smtp_pass' %}
+                            •••••••••
+                        {% else %}
+                            {{ s.setting_value }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" class="text-center">Keine Einstellungen vorhanden</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

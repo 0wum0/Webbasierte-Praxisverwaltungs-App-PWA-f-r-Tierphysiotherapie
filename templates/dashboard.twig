@@ -1,0 +1,307 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="row row-cols-1 row-cols-lg-2 row-cols-xl-4">
+    <!-- Finanzübersicht -->
+    <div class="col">
+        <div class="card radius-10">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div>
+                        <p class="mb-0">Diesen Monat</p>
+                        <h4 class="my-1">{{ incomeMonth|number_format(2, ',', '.') }} €</h4>
+                    </div>
+                    <div class="widgets-icons bg-light-primary text-primary ms-auto">
+                        <i class='bx bxs-wallet'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card radius-10">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div>
+                        <p class="mb-0">Dieses Jahr</p>
+                        <h4 class="my-1">{{ incomeYear|number_format(2, ',', '.') }} €</h4>
+                    </div>
+                    <div class="widgets-icons bg-light-info text-info ms-auto">
+                        <i class='bx bx-calendar'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card radius-10">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div>
+                        <p class="mb-0">Gesamt Einnahmen</p>
+                        <h4 class="my-1">{{ totalIncome|number_format(2, ',', '.') }} €</h4>
+                    </div>
+                    <div class="widgets-icons bg-light-success text-success ms-auto">
+                        <i class='bx bx-line-chart'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card radius-10">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div>
+                        <p class="mb-0">Offene Rechnungen</p>
+                        <h4 class="my-1 text-danger">{{ totalExpenses|number_format(2, ',', '.') }} €</h4>
+                    </div>
+                    <div class="widgets-icons bg-light-danger text-danger ms-auto">
+                        <i class='bx bx-error-circle'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if birthdaySuccess %}
+    <div class="alert alert-success mt-4">{{ birthdaySuccess }}</div>
+{% endif %}
+
+<div class="row mt-4">
+    <!-- Termine heute -->
+    <div class="col-xl-6 d-flex">
+        <div class="card radius-10 w-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">📅 Heutige Termine</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for appt in appointmentsToday %}
+                    <li class="list-group-item">
+                        <a href="javascript:void(0);" class="open-patient-modal" data-patient="{{ appt.patient_id }}">
+                            {{ appt.appointment_date|date("H:i") }} – {{ appt.patient_name }} ({{ appt.firstname }} {{ appt.lastname }})
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="list-group-item">Keine Termine heute</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Geburtstage heute -->
+    <div class="col-xl-6 d-flex">
+        <div class="card radius-10 w-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">🎂 Geburtstage heute</h5>
+                {% if birthdayOwners or birthdayPatients %}
+                    <a href="dashboard.php?action=send_birthday_mails#birthdays" class="btn btn-sm btn-primary">
+                        ✉️ Geburtstagsmails senden
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if birthdayOwners or birthdayPatients %}
+                    {% for owner in birthdayOwners %}
+                        <p>🎉 Besitzer: {{ owner.firstname }} {{ owner.lastname }}</p>
+                    {% endfor %}
+                    {% for pet in birthdayPatients %}
+                        <p>🐾 Tier: {{ pet.name }} (Besitzer: {{ pet.firstname }} {{ pet.lastname }})</p>
+                    {% endfor %}
+                {% else %}
+                    <p>Heute hat niemand Geburtstag 🎈</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# -------- Modal aus patients.twig mit Edit/Delete -------- #}
+<div class="modal fade" id="patientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content owner-modal">
+      <div class="modal-header owner-header d-flex justify-content-between align-items-center">
+        <h5 class="modal-title owner-title d-flex align-items-center gap-2">
+          <span class="owner-avatar" id="patientAvatar">🐾</span>
+          <span id="patientName">Patient</span>
+        </h5>
+        <div class="owner-actions">
+          <button class="btn btn-sm btn-warning edit-patient-btn glow-btn">✏️ Bearbeiten</button>
+          <button class="btn btn-sm btn-danger delete-patient-btn glow-btn">🗑️ Löschen</button>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+
+      <div class="modal-body owner-body">
+        <div id="patientInfo" class="glass-slab mb-3">
+          <p class="text-muted">⏳ Lade Patientendaten...</p>
+        </div>
+
+        <ul class="nav nav-tabs owner-tabs mt-3" role="tablist">
+          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-treatments">💊 Behandlungen</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-invoices">💰 Rechnungen</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-notes">📝 Notizen</a></li>
+        </ul>
+
+        <div class="tab-content p-3">
+          <div class="tab-pane fade show active" id="tab-treatments">
+            <ul class="list-group fancy-list" id="treatmentsList"></ul>
+          </div>
+          <div class="tab-pane fade" id="tab-invoices">
+            <ul class="list-group fancy-list" id="invoicesList"></ul>
+          </div>
+          <div class="tab-pane fade" id="tab-notes">
+            <ul class="list-group fancy-list" id="notesList"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer owner-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Schließen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==== JS Modal Funktionen ==== -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const API_URL = 'api/patients_api.php';
+  let currentPatientId = null;
+
+  async function apiPost(payload) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  function renderTreatments(list) {
+    const ul = document.getElementById('treatmentsList');
+    ul.innerHTML = "";
+    if (!list.length) { ul.innerHTML = "<li class='list-group-item text-muted'>Keine Behandlungen</li>"; return; }
+    list.forEach(a => {
+      const li = document.createElement('li');
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>🗓️ ${a.appointment_display} – ${a.notes ?? "-"}</span>
+        <div>
+          <button class="btn btn-sm btn-warning edit-treatment-btn glow-btn" data-id="${a.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-treatment-btn glow-btn" data-id="${a.id}">🗑️</button>
+        </div>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderInvoices(list) {
+    const ul = document.getElementById('invoicesList');
+    ul.innerHTML = "";
+    if (!list.length) { ul.innerHTML = "<li class='list-group-item text-muted'>Keine Rechnungen</li>"; return; }
+    list.forEach(inv => {
+      const li = document.createElement('li');
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>#${inv.id} – ${inv.amount} € <span class="badge bg-glass ms-1">${inv.created_display}</span></span>
+        <button class="btn btn-sm btn-warning glow-btn toggle-invoice-btn" data-id="${inv.id}" data-status="${inv.status}">
+          ${inv.status === 'paid' ? '↩️ Offen' : '✅ Bezahlt'}
+        </button>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderNotes(list) {
+    const ul = document.getElementById('notesList');
+    ul.innerHTML = "";
+    if (!list.length) { ul.innerHTML = "<li class='list-group-item text-muted'>Keine Notizen</li>"; return; }
+    list.forEach(n => {
+      const li = document.createElement('li');
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>📝 ${n.content} <span class="badge bg-glass ms-1">${n.created_display}</span></span>
+        <div>
+          <button class="btn btn-sm btn-warning edit-note-btn glow-btn" data-id="${n.id}" data-content="${n.content}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-note-btn glow-btn" data-id="${n.id}">🗑️</button>
+        </div>`;
+      ul.appendChild(li);
+    });
+  }
+
+  document.querySelectorAll('.open-patient-modal').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      currentPatientId = this.dataset.patient;
+      const modal = new bootstrap.Modal(document.getElementById('patientModal'));
+      modal.show();
+
+      const info = document.getElementById('patientInfo');
+      info.innerHTML = "<p class='text-muted'>⏳ Lade Daten...</p>";
+
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      if (!data.success) {
+        info.innerHTML = "<p class='text-danger'>❌ Fehler: " + data.error + "</p>";
+        return;
+      }
+
+      document.getElementById('patientName').innerText = data.patient.name;
+      if (data.patient.image) {
+        document.getElementById('patientAvatar').innerHTML = `<img src="${data.patient.image}" class="rounded-circle" style="height:40px;width:40px;object-fit:cover;">`;
+      } else {
+        document.getElementById('patientAvatar').innerText = "🐾";
+      }
+
+      info.innerHTML = `
+        <div><strong>Art:</strong> ${data.patient.species} – ${data.patient.breed}</div>
+        <div><strong>Besitzer:</strong> ${data.owner.firstname} ${data.owner.lastname}</div>
+        <div><strong>Geburtsdatum:</strong> ${data.patient.birthdate ?? "-"} 
+             <span class="badge badge-glass badge-paid">${data.patient.age_years ?? "-"} J.</span></div>
+        <div><strong>Symptome:</strong> ${data.patient.symptoms ?? "-"}</div>
+      `;
+
+      renderTreatments(data.appointments);
+      renderInvoices(data.invoices);
+      renderNotes(data.notes);
+    });
+  });
+
+  // --- Events ---
+  document.addEventListener('click', async e => {
+    if (e.target.classList.contains('delete-treatment-btn')) {
+      await apiPost({ action: 'delete_treatment', id: e.target.dataset.id, patient_id: currentPatientId });
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      renderTreatments(data.appointments);
+    }
+    if (e.target.classList.contains('edit-treatment-btn')) {
+      const newText = prompt("Neue Notiz eingeben:");
+      if (newText) {
+        await apiPost({ action: 'edit_treatment', id: e.target.dataset.id, notes: newText, patient_id: currentPatientId });
+        const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+        renderTreatments(data.appointments);
+      }
+    }
+    if (e.target.classList.contains('delete-note-btn')) {
+      await apiPost({ action: 'delete_note', patient_id: currentPatientId, note_id: e.target.dataset.id });
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      renderNotes(data.notes);
+    }
+    if (e.target.classList.contains('edit-note-btn')) {
+      const old = e.target.dataset.content;
+      const newContent = prompt("Neue Notiz eingeben:", old);
+      if (newContent && newContent !== old) {
+        await apiPost({ action: 'edit_note', id: e.target.dataset.id, patient_id: currentPatientId, content: newContent });
+        const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+        renderNotes(data.notes);
+      }
+    }
+    if (e.target.classList.contains('toggle-invoice-btn')) {
+      const id = e.target.dataset.id;
+      const newStatus = e.target.dataset.status === 'paid' ? 'open' : 'paid';
+      await apiPost({ action: 'edit_invoice_status', id: id, status: newStatus, patient_id: currentPatientId });
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      renderInvoices(data.invoices);
+    }
+  });
+});
+</script>
+{% endblock %}

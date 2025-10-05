@@ -1,0 +1,28 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2>📝 Neue Notiz {% if patient %}für {{ patient.name }}{% endif %}</h2>
+
+    {% if errors %}
+    <div class="alert alert-danger">
+        <ul>
+            {% for e in errors %}
+            <li>{{ e }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" class="bg-dark p-3 rounded shadow">
+        <div class="mb-3">
+            <label class="form-label">Notiz</label>
+            <textarea name="content" class="form-control" rows="5" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">💾 Speichern</button>
+        <a href="patient.php?id={{ patient.id }}" class="btn btn-secondary">Zurück</a>
+    </form>
+</div>
+{% endblock %}
