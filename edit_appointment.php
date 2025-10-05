@@ -5,6 +5,7 @@ session_start();
 
 require_once __DIR__ . "/includes/db.php";
 require_once __DIR__ . "/includes/twig.php";
+require_once __DIR__ . "/includes/csrf.php";
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $patient_id = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;
@@ -37,6 +38,13 @@ if ($id > 0) {
 
 // Formular abgesendet?
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        csrf_validate();
+    } catch (RuntimeException $e) {
+        $errors[] = $e->getMessage();
+        goto render;
+    }
+    
     $appointment_date = $_POST['appointment_date'] ?? '';
     $duration = (int)($_POST['duration'] ?? 60);
     $notes = trim($_POST['notes'] ?? '');
@@ -99,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Render
+render:
 echo $twig->render("edit_appointment.twig", [
     "patient" => $patient,
     "appointment" => $appointment,

@@ -1,7 +1,36 @@
 {
+    "name": "tierphysio/praxis-pwa",
+    "description": "Praxis-Management PWA für Tierphysiotherapie",
+    "type": "project",
+    "license": "MIT",
     "require": {
+        "php": "^8.2",
         "twig/twig": "^3.0",
         "dompdf/dompdf": "^2.0",
-        "phpmailer/phpmailer": "^6.9"
+        "phpmailer/phpmailer": "^6.9",
+        "monolog/monolog": "^3.5",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10",
+        "vimeo/psalm": "^5.20",
+        "squizlabs/php_codesniffer": "^3.8",
+        "friendsofphp/php-cs-fixer": "^3.48"
+    },
+    "scripts": {
+        "lint": "find . -path ./vendor -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "fix": "php-cs-fixer fix --using-cache=no",
+        "stan": "phpstan analyse --memory-limit=512M",
+        "psalm": "psalm",
+        "audit": "composer audit",
+        "test": "@lint"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     }
 }
