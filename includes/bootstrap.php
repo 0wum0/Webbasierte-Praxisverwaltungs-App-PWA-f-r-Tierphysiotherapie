@@ -210,11 +210,75 @@ register_shutdown_function(function() {
     }
 });
 
+// ============================================================================
+// Installation und Login Guards
+// ============================================================================
+
+// Pfade definieren
+$installedLockFile = __DIR__ . '/../install/installed.lock';
+$currentScript = $_SERVER['SCRIPT_NAME'] ?? '';
+$currentPath = $_SERVER['REQUEST_URI'] ?? '';
+
+// Normalisiere Pfade
+$isInstallPath = strpos($currentScript, '/install/') !== false;
+$isLoginPath = strpos($currentScript, '/login.php') !== false;
+$isAssetPath = strpos($currentPath, '/assets/') !== false || strpos($currentPath, '/uploads/') !== false;
+$isApiPath = strpos($currentScript, '/api/') !== false;
+
+// Installation prüfen
+if (!file_exists($installedLockFile)) {
+    // System ist nicht installiert
+    if (!$isInstallPath && !$isAssetPath) {
+        // Leite zum Installer um
+        header('Location: /install/installer.php');
+        exit('System ist nicht installiert. Bitte führen Sie die <a href="/install/installer.php">Installation</a> durch.');
+    }
+} else {
+    // System ist installiert
+    
+    // Maintenance Mode prüfen
+    $configFile = __DIR__ . '/config.php';
+    if (!file_exists($configFile) && !$isInstallPath) {
+        // Config fehlt aber System ist als installiert markiert
+        http_response_code(503);
+        echo '<!DOCTYPE html><html><head><title>Wartungsmodus</title></head><body>';
+        echo '<h1>System im Wartungsmodus</h1>';
+        echo '<p>Die Konfigurationsdatei fehlt. Bitte kontaktieren Sie den Administrator oder ';
+        echo 'löschen Sie die Datei <code>install/installed.lock</code> für eine Neuinstallation.</p>';
+        echo '</body></html>';
+        exit;
+    }
+    
+    // Login-Enforcement (nur wenn nicht in speziellen Pfaden)
+    if (!$isInstallPath && !$isLoginPath && !$isAssetPath && !$isApiPath) {
+        // Prüfe ob Benutzer eingeloggt ist
+        if (function_exists('auth_check') && function_exists('auth_check_admin')) {
+            // Weder normaler Benutzer noch Admin eingeloggt
+            if (!auth_check() && !auth_check_admin()) {
+                // Admin-Bereich?
+                if (strpos($currentScript, '/admin/') !== false) {
+                    header('Location: /admin/login.php');
+                } else {
+                    header('Location: /login.php');
+                }
+                exit;
+            }
+        }
+    }
+    
+    // Installer-Zugriff blockieren wenn installiert
+    if ($isInstallPath && basename($currentScript) === 'installer.php') {
+        header('Location: /login.php');
+        exit('System ist bereits installiert.');
+    }
+}
+
 // Bootstrap abgeschlossen
 if (function_exists('logDebug')) {
     logDebug('Bootstrap completed', [
         'autoloader' => $autoloaderLoaded ? 'loaded' : 'not found',
         'environment' => APP_ENV,
         'debug' => APP_DEBUG,
+        'installed' => file_exists($installedLockFile),
     ]);
 }

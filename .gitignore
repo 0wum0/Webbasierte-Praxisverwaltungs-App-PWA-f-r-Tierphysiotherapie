@@ -10,3 +10,8 @@ composer.phar
 *~
 .DS_Store
 Thumbs.db
+
+# Installation files
+/install/installed.lock
+/includes/config.php
+/includes/config.php.bak.*
