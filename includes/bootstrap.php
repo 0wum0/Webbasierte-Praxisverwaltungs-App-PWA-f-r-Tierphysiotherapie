@@ -214,62 +214,161 @@ register_shutdown_function(function() {
 // Installation und Login Guards
 // ============================================================================
 
-// Pfade definieren
-$installedLockFile = __DIR__ . '/../install/installed.lock';
+// WICHTIG: Absolute Pfade für Lock-Datei verwenden, um Redirect-Loops zu vermeiden
+$installLock = dirname(__DIR__) . '/install/installed.lock';
+
+// Aktuelle Request-Informationen ermitteln
 $currentScript = $_SERVER['SCRIPT_NAME'] ?? '';
-$currentPath = $_SERVER['REQUEST_URI'] ?? '';
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
 
-// Normalisiere Pfade
-$isInstallPath = strpos($currentScript, '/install/') !== false;
-$isLoginPath = strpos($currentScript, '/login.php') !== false;
-$isAssetPath = strpos($currentPath, '/assets/') !== false || strpos($currentPath, '/uploads/') !== false;
-$isApiPath = strpos($currentScript, '/api/') !== false;
+// Prüfen, ob wir uns im Installer befinden (verbesserte Erkennung)
+$isInstaller = str_contains($currentScript, '/install/');
 
-// Installation prüfen
-if (!file_exists($installedLockFile)) {
-    // System ist nicht installiert
-    if (!$isInstallPath && !$isAssetPath) {
-        // Leite zum Installer um
+// Weitere Pfad-Checks für spezielle Bereiche
+$isLoginPage = str_contains($currentScript, '/login.php');
+$isAdminLogin = str_contains($currentScript, '/admin/login.php');
+$isAdminArea = str_contains($currentScript, '/admin/');
+$isStaticAsset = str_contains($requestUri, '/assets/') || str_contains($requestUri, '/uploads/');
+$isApiEndpoint = str_contains($currentScript, '/api/');
+
+// ============================================================================
+// SCHRITT 1: Installer-Check (Lock-Datei prüfen)
+// ============================================================================
+
+if (!file_exists($installLock)) {
+    // System ist NICHT installiert
+    
+    // Wenn wir nicht bereits im Installer sind und es kein Static Asset ist
+    if (!$isInstaller && !$isStaticAsset) {
+        // Zum Installer weiterleiten
         header('Location: /install/installer.php');
         exit('System ist nicht installiert. Bitte führen Sie die <a href="/install/installer.php">Installation</a> durch.');
     }
-} else {
-    // System ist installiert
+    // Installer darf ausgeführt werden, wenn Lock-Datei fehlt
     
-    // Maintenance Mode prüfen
+} else {
+    // System ist INSTALLIERT
+    
+    // ============================================================================
+    // SCHRITT 2: Installer blockieren, wenn bereits installiert
+    // ============================================================================
+    
+    if ($isInstaller) {
+        // Installer-Zugriff blockieren und zum Login weiterleiten
+        header('Location: /login.php');
+        exit('System ist bereits installiert. <a href="/login.php">Zum Login</a>');
+    }
+    
+    // ============================================================================
+    // SCHRITT 3: Config-Datei prüfen (Safety Net)
+    // ============================================================================
+    
     $configFile = __DIR__ . '/config.php';
-    if (!file_exists($configFile) && !$isInstallPath) {
-        // Config fehlt aber System ist als installiert markiert
+    if (!file_exists($configFile) && !$isStaticAsset) {
+        // Konfiguration fehlt trotz Installation - Fehlerseite anzeigen
         http_response_code(503);
-        echo '<!DOCTYPE html><html><head><title>Wartungsmodus</title></head><body>';
-        echo '<h1>System im Wartungsmodus</h1>';
-        echo '<p>Die Konfigurationsdatei fehlt. Bitte kontaktieren Sie den Administrator oder ';
-        echo 'löschen Sie die Datei <code>install/installed.lock</code> für eine Neuinstallation.</p>';
-        echo '</body></html>';
+        echo '<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konfigurationsfehler</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .error-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 { color: #dc2626; margin-bottom: 1rem; }
+        p { color: #4b5563; line-height: 1.6; }
+        code { 
+            background: #f3f4f6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: #dc2626;
+        }
+        .actions { margin-top: 2rem; }
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #6366f1;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 0.5rem;
+        }
+        .btn:hover { background: #4f46e5; }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>⚠️ Konfigurationsfehler</h1>
+        <p>
+            <strong>Konfigurationsdatei fehlt.</strong><br>
+            Bitte prüfen Sie Ihre Installation oder führen Sie eine Neuinstallation durch.
+        </p>
+        <p>
+            Die Datei <code>includes/config.php</code> konnte nicht gefunden werden,
+            obwohl das System als installiert markiert ist.
+        </p>
+        <div class="actions">
+            <p><strong>Optionen:</strong></p>
+            <p>1. Stellen Sie die fehlende Konfigurationsdatei wieder her</p>
+            <p>2. Löschen Sie <code>install/installed.lock</code> für eine Neuinstallation</p>
+        </div>
+    </div>
+</body>
+</html>';
         exit;
     }
     
-    // Login-Enforcement (nur wenn nicht in speziellen Pfaden)
-    if (!$isInstallPath && !$isLoginPath && !$isAssetPath && !$isApiPath) {
-        // Prüfe ob Benutzer eingeloggt ist
+    // ============================================================================
+    // SCHRITT 4: Login-Enforcement (nur für geschützte Bereiche)
+    // ============================================================================
+    
+    // Bereiche, die KEINE Authentifizierung benötigen
+    $publicAreas = [
+        $isLoginPage,
+        $isAdminLogin,
+        $isStaticAsset,
+        $isApiEndpoint, // APIs haben eigene Auth-Logik
+    ];
+    
+    // Wenn wir uns nicht in einem öffentlichen Bereich befinden
+    if (!in_array(true, $publicAreas, true)) {
+        // Auth-Funktionen verfügbar?
         if (function_exists('auth_check') && function_exists('auth_check_admin')) {
-            // Weder normaler Benutzer noch Admin eingeloggt
-            if (!auth_check() && !auth_check_admin()) {
-                // Admin-Bereich?
-                if (strpos($currentScript, '/admin/') !== false) {
+            // Prüfen ob Benutzer eingeloggt ist
+            $userLoggedIn = auth_check();
+            $adminLoggedIn = auth_check_admin();
+            
+            // Niemand eingeloggt?
+            if (!$userLoggedIn && !$adminLoggedIn) {
+                // Redirect-URL speichern für späteren Redirect nach Login
+                $_SESSION['redirect_after_login'] = $requestUri;
+                
+                // Je nach Bereich zum passenden Login weiterleiten
+                if ($isAdminArea) {
                     header('Location: /admin/login.php');
+                    exit('Bitte melden Sie sich an. <a href="/admin/login.php">Zum Admin-Login</a>');
                 } else {
                     header('Location: /login.php');
+                    exit('Bitte melden Sie sich an. <a href="/login.php">Zum Login</a>');
                 }
-                exit;
             }
         }
-    }
-    
-    // Installer-Zugriff blockieren wenn installiert
-    if ($isInstallPath && basename($currentScript) === 'installer.php') {
-        header('Location: /login.php');
-        exit('System ist bereits installiert.');
     }
 }
 
