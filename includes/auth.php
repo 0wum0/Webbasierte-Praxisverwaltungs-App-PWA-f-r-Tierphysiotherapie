@@ -286,9 +286,14 @@ function admin_login(string $email, string $password, PDO $pdo): bool
 {
     try {
         // Admin-User aus DB laden mit case-insensitive email comparison
+        // Unterstützt sowohl alte (name) als auch neue (display_name) Spalte
         $stmt = $pdo->prepare("
-            SELECT id, email, password_hash, name, is_active, is_super_admin,
-                   failed_login_attempts, locked_until
+            SELECT id, email, password_hash, 
+                   COALESCE(display_name, name, email) as name,
+                   is_active,
+                   COALESCE(is_super_admin, 0) as is_super_admin,
+                   COALESCE(failed_login_attempts, 0) as failed_login_attempts,
+                   locked_until
             FROM admin_users 
             WHERE LOWER(email) = LOWER(:email)
         ");
@@ -335,15 +340,21 @@ function admin_login(string $email, string $password, PDO $pdo): bool
             return false;
         }
         
-        // Rollen laden
-        $stmt = $pdo->prepare("
-            SELECT r.name 
-            FROM admin_roles r
-            JOIN admin_user_roles aur ON r.id = aur.role_id
-            WHERE aur.user_id = :user_id
-        ");
-        $stmt->execute([':user_id' => $user['id']]);
-        $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        // Rollen laden (optional - Tabelle existiert möglicherweise nicht)
+        $roles = [];
+        try {
+            $stmt = $pdo->prepare("
+                SELECT r.name 
+                FROM admin_roles r
+                JOIN admin_user_roles aur ON r.id = aur.role_id
+                WHERE aur.user_id = :user_id
+            ");
+            $stmt->execute([':user_id' => $user['id']]);
+            $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            // Rollen-Tabellen existieren noch nicht - ignorieren
+            $roles = [];
+        }
         
         // Login erfolgreich -> Session setzen
         auth_admin_login((int)$user['id'], $user['email'], $user['name'], $roles);
@@ -362,23 +373,80 @@ function admin_login(string $email, string $password, PDO $pdo): bool
             ':id' => $user['id'],
         ]);
         
-        // Audit Log
-        $stmt = $pdo->prepare("
-            INSERT INTO audit_log (admin_user_id, action, description, ip_address, user_agent)
-            VALUES (:user_id, 'login', 'Admin login successful', :ip, :user_agent)
-        ");
-        $stmt->execute([
-            ':user_id' => $user['id'],
-            ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            ':user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-        ]);
+        // Audit Log (optional - Tabelle existiert möglicherweise nicht)
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO audit_log (admin_user_id, action, description, ip_address, user_agent)
+                VALUES (:user_id, 'login', 'Admin login successful', :ip, :user_agent)
+            ");
+            $stmt->execute([
+                ':user_id' => $user['id'],
+                ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                ':user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            ]);
+        } catch (PDOException $e) {
+            // Audit-Tabelle existiert noch nicht - ignorieren
+        }
         
         return true;
     } catch (Exception $e) {
-        logError('Admin login error', [
-            'email' => $email,
-            'error' => $e->getMessage(),
-        ]);
+        if (function_exists('logError')) {
+            logError('Admin login error', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+            ]);
+        }
         return false;
     }
+}
+
+/**
+ * Vereinfachte Helper-Funktionen für kompatibilität
+ */
+
+/**
+ * Prüft ob ein Benutzer eingeloggt ist
+ * Alias für auth_check
+ */
+function is_logged_in(): bool
+{
+    return auth_check() || auth_check_admin();
+}
+
+/**
+ * Erzwingt Login - leitet zur Login-Seite weiter wenn nicht eingeloggt
+ */
+function guard(): void
+{
+    if (!is_logged_in()) {
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'] ?? '/';
+        header('Location: /login.php');
+        exit;
+    }
+}
+
+/**
+ * Vereinfachte Login-Funktion
+ * @param string $email
+ * @param string $password
+ * @return bool
+ */
+function login(string $email, string $password): bool
+{
+    global $pdo;
+    
+    if (!isset($pdo)) {
+        require_once __DIR__ . '/db.php';
+    }
+    
+    return admin_login($email, $password, $pdo);
+}
+
+/**
+ * Logout-Funktion
+ */
+function logout(): void
+{
+    auth_logout();
+    auth_admin_logout();
 }
