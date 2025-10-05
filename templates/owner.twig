@@ -69,6 +69,7 @@
             <h5>Notizen</h5>
 
             <form method="post" class="mb-3">
+        {{ csrf_field()|raw }}
                 <textarea name="note_content" class="form-control mb-2" rows="3" placeholder="Neue Notiz eingeben..." required></textarea>
                 <button type="submit" class="btn btn-success">💾 Notiz speichern</button>
             </form>

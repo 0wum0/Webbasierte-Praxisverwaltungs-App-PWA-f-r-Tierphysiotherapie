@@ -20,6 +20,7 @@
     {% endif %}
 
     <form method="post" enctype="multipart/form-data" class="bg-dark p-3 rounded shadow">
+        {{ csrf_field()|raw }}
 
         <div class="mb-3">
             <label class="form-label">Besitzer *</label>

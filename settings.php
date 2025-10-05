@@ -1,9 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/bootstrap.php";
 require_once __DIR__ . "/includes/twig.php";
-require_once __DIR__ . "/includes/csrf.php";
 
 $errors = [];
 $success = false;

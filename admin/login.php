@@ -1,12 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/../includes/logger.php';
-require_once __DIR__ . '/../includes/error_handler.php';
-require_once __DIR__ . '/../includes/csrf.php';
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 auth_session_start();
 

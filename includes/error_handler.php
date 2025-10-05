@@ -42,7 +42,7 @@ set_error_handler(function (int $errno, string $errstr, string $errfile, int $er
         case E_STRICT:
         case E_DEPRECATED:
         case E_USER_DEPRECATED:
-            $logger->notice($message);
+            $logger->info($message);
             break;
             
         default:
@@ -102,6 +102,6 @@ register_shutdown_function(function (): void {
             $error['line']
         );
         
-        $logger->critical($message);
+        $logger->error($message);
     }
 });
