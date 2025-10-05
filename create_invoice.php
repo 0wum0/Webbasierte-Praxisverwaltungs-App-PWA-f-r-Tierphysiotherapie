@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 session_start();
 
-require_once __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/bootstrap.php";
 require_once __DIR__ . "/includes/twig.php";
 
 $patient_id = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;

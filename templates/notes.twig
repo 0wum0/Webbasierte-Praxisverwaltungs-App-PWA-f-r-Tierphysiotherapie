@@ -21,6 +21,7 @@
 
     <!-- Formular neue Notiz -->
     <form method="post" class="bg-dark p-3 rounded shadow mb-4">
+        {{ csrf_field()|raw }}
         <div class="mb-3">
             <label class="form-label">Notiz</label>
             <textarea name="content" class="form-control" rows="3" required></textarea>

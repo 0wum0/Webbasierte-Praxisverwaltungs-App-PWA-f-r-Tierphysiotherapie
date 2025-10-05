@@ -1,13 +1,10 @@
 <?php
 declare(strict_types=1);
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
 
-require_once __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/bootstrap.php";
 require_once __DIR__ . "/includes/twig.php";
 require_once __DIR__ . "/includes/mail.php";
 
-require_once __DIR__ . "/vendor/autoload.php";
 use PHPMailer\PHPMailer\Exception;
 
 // Datum heute (Monat-Tag)

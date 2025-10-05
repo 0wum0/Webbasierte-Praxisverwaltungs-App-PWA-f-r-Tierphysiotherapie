@@ -10,6 +10,7 @@
     <h4 class="mb-3">➕ Neue Rechnung</h4>
 
     <form method="post">
+        {{ csrf_field()|raw }}
       <div class="mb-3">
         <label for="patient" class="form-label">Patient auswählen</label>
         <select class="form-select" id="patient" name="patient_id" required>

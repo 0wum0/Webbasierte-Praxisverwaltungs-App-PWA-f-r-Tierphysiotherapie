@@ -5,7 +5,7 @@ ini_set('display_errors', '1');
 
 session_start();
 
-require_once __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/bootstrap.php";
 
 // Rechnungs-ID und Zielstatus abholen
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

@@ -96,3 +96,18 @@ function csrf_regenerate(): string
     
     return $_SESSION['csrf_token'];
 }
+
+/**
+ * Initialisiert CSRF-Schutz
+ * Stellt sicher, dass ein Token existiert
+ */
+function csrf_init(): void
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+}
