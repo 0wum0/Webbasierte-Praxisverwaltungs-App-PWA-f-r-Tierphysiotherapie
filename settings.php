@@ -3,9 +3,21 @@ declare(strict_types=1);
 
 require_once __DIR__ . "/includes/db.php";
 require_once __DIR__ . "/includes/twig.php";
+require_once __DIR__ . "/includes/csrf.php";
 
 $errors = [];
 $success = false;
+
+// CSRF-Schutz für POST-Requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        csrf_validate();
+    } catch (RuntimeException $e) {
+        $errors[] = $e->getMessage();
+        // Keine weitere Verarbeitung wenn CSRF fehlschlägt
+        goto render;
+    }
+}
 
 // Vorhandene Einstellungen laden
 $stmt = $pdo->query("SELECT * FROM settings ORDER BY setting_key ASC");
@@ -156,6 +168,7 @@ if (isset($_POST['birthday_mail_subject'])) {
 }
 
 // Render
+render:
 echo $twig->render("settings.twig", [
     "settings"     => $settings,
     "settingsMap"  => $settingsMap,
