@@ -26,93 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Bitte E-Mail und Passwort eingeben');
         }
         
-        // Admin-User aus DB laden
-        $stmt = $pdo->prepare("
-            SELECT id, email, password, name, is_active, is_super_admin,
-                   failed_login_attempts, locked_until
-            FROM admin_users 
-            WHERE email = :email
-        ");
-        $stmt->execute([':email' => $email]);
-        $user = $stmt->fetch();
-        
-        if (!$user) {
+        // Use the admin_login function from auth.php
+        if (!admin_login($email, $password, $pdo)) {
             throw new RuntimeException('Ungültige Anmeldedaten');
         }
-        
-        // Account gesperrt?
-        if ($user['locked_until'] !== null && strtotime($user['locked_until']) > time()) {
-            throw new RuntimeException('Account gesperrt bis ' . date('H:i:s', strtotime($user['locked_until'])));
-        }
-        
-        // Account aktiv?
-        if (!$user['is_active']) {
-            throw new RuntimeException('Account ist deaktiviert');
-        }
-        
-        // Passwort prüfen
-        if (!auth_verify_password($password, $user['password'])) {
-            // Failed Login zählen
-            $attempts = (int)$user['failed_login_attempts'] + 1;
-            $lockUntil = null;
-            
-            // Nach 5 Versuchen: 15 Minuten sperren
-            if ($attempts >= 5) {
-                $lockUntil = date('Y-m-d H:i:s', time() + 900);
-            }
-            
-            $stmt = $pdo->prepare("
-                UPDATE admin_users 
-                SET failed_login_attempts = :attempts,
-                    locked_until = :locked_until
-                WHERE id = :id
-            ");
-            $stmt->execute([
-                ':attempts' => $attempts,
-                ':locked_until' => $lockUntil,
-                ':id' => $user['id'],
-            ]);
-            
-            throw new RuntimeException('Ungültige Anmeldedaten');
-        }
-        
-        // Rollen laden
-        $stmt = $pdo->prepare("
-            SELECT r.name 
-            FROM admin_roles r
-            JOIN admin_user_roles aur ON r.id = aur.role_id
-            WHERE aur.user_id = :user_id
-        ");
-        $stmt->execute([':user_id' => $user['id']]);
-        $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        // Login erfolgreich -> Session setzen
-        auth_admin_login((int)$user['id'], $user['email'], $user['name'], $roles);
-        
-        // Login-Info aktualisieren
-        $stmt = $pdo->prepare("
-            UPDATE admin_users 
-            SET last_login = NOW(),
-                last_login_ip = :ip,
-                failed_login_attempts = 0,
-                locked_until = NULL
-            WHERE id = :id
-        ");
-        $stmt->execute([
-            ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            ':id' => $user['id'],
-        ]);
-        
-        // Audit Log
-        $stmt = $pdo->prepare("
-            INSERT INTO audit_log (admin_user_id, action, description, ip_address, user_agent)
-            VALUES (:user_id, 'login', 'Admin login successful', :ip, :user_agent)
-        ");
-        $stmt->execute([
-            ':user_id' => $user['id'],
-            ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            ':user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-        ]);
         
         // Redirect
         $redirectTo = $_SESSION['admin_redirect_after_login'] ?? 'index.php';
