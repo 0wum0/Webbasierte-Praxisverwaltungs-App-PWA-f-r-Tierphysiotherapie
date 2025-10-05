@@ -302,8 +302,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
                 
-                // installed.lock erstellen
-                if (file_put_contents($installedLockFile, date('Y-m-d H:i:s') . PHP_EOL) !== false) {
+                // installed.lock mit erweiterten Informationen erstellen
+                $lockContent = 'installed:' . date('Y-m-d H:i:s') . PHP_EOL;
+                $lockContent .= 'admin_email:' . ($_SESSION['installer_admin_email'] ?? 'unknown') . PHP_EOL;
+                $lockContent .= 'install_ip:' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . PHP_EOL;
+                
+                if (file_put_contents($installedLockFile, $lockContent) !== false) {
+                    // Versuche, korrekte Dateiberechtigungen zu setzen (664)
+                    @chmod($installedLockFile, 0664);
+                    
                     // Session aufräumen
                     unset(
                         $_SESSION['installer_csrf_token'],
