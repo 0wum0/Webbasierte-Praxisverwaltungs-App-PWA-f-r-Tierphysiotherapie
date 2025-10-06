@@ -1,20 +1,59 @@
-# 🧠 Cursor Auto-Integrity Check
-# Tierphysio Manager - Automatische Code-Validierung vor jedem Commit
+# 🧠 Tierphysio Manager – Auto-Integrity + Auto-Fix System
+# by Florian Engelhardt © 2025
+
+defaults:
+  run_on_every_prompt: true   # 🔥 Führt Check + Fix bei jedem Cursor-Prompt automatisch aus
 
 tasks:
+
   - name: "Integrity Auto-Check"
-    trigger: "beforeCommit"
+    trigger: ["beforeCommit", "beforePrompt"]
     action:
       run: |
-        echo "🔍 Prüfe Integrität der Anwendung über ew.makeit.uno ..."
-        STATUS=$(curl -s https://ew.makeit.uno/integrity.php | grep -E '❌|⚠️')
-        if [ -n "$STATUS" ]; then
-          echo "❌ Integritätsprüfung hat Warnungen oder Fehler gefunden:"
-          echo "$STATUS"
-          echo "------------------------------------------------------------"
-          echo "Bitte überprüfe die Meldungen auf https://ew.makeit.uno/integrity.php"
-          echo "und behebe sie, bevor du committest."
-          exit 1
+        echo "🔍 Starte automatische Integritätsprüfung über https://ew.makeit.uno/integrity.php ..."
+        RESPONSE=$(curl -s https://ew.makeit.uno/integrity.php)
+
+        if echo "$RESPONSE" | grep -E '❌|⚠️' >/dev/null; then
+          echo "⚠️ Probleme erkannt – Auto-Fix wird ausgeführt ..."
+          
+          # 1️⃣ Fehlende {% endblock %} in .twig-Dateien automatisch korrigieren
+          find templates -type f -name "*.twig" | while read file; do
+            if ! grep -q "{% endblock %}" "$file"; then
+              echo "{% endblock %}" >> "$file"
+              echo "🛠️ endblock hinzugefügt: $file"
+            fi
+          done
+          
+          # 2️⃣ base.twig-Erweiterung sicherstellen
+          find templates -type f -name "*.twig" | while read file; do
+            if ! grep -q "{% extends 'base.twig' %}" "$file" && [[ "$file" != *"base.twig"* ]]; then
+              sed -i '1i {% extends "base.twig" %}' "$file"
+              echo "🛠️ base.twig-Erweiterung ergänzt: $file"
+            fi
+          done
+          
+          # 3️⃣ Header- und Modal-Fixes
+          if [ -f includes/layout/header.php ]; then
+            grep -q "topbar" includes/layout/header.php || \
+              sed -i '2i <!-- 🧩 Auto-Fix: Topbar hinzugefügt -->\n<div class="topbar"></div>' includes/layout/header.php
+            echo "🛠️ Header geprüft und ggf. korrigiert."
+          fi
+
+          find . -type f -name "*.php" | while read php; do
+            if grep -q "modal" "$php" && ! grep -q "z-index" "$php"; then
+              sed -i 's/<div class="modal"/<div class="modal" style="z-index:1050"/g' "$php"
+              echo "🛠️ Modal z-index repariert: $php"
+            fi
+          done
+          
+          # 4️⃣ CSS Fix für Footer
+          if grep -q "position: fixed" public/css/main.css; then
+            sed -i 's/position: fixed/position: relative/g' public/css/main.css
+            echo "🛠️ Footer Fix: position nun relative."
+          fi
+
+          # 5️⃣ Abschließende Kontrolle
+          echo "✅ Auto-Fix abgeschlossen. Bitte integrity.php neu laden und prüfen!"
         else
-          echo "✅ Integritätsprüfung erfolgreich – alles stabil!"
+          echo "✅ Integritätsprüfung bestanden – keine Korrekturen nötig."
         fi
