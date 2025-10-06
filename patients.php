@@ -364,7 +364,7 @@ $csrfToken = csrf_token();
     </div>
     
     <!-- Add Patient Modal -->
-    <div class="modal fade" id="addPatientModal" tabindex="-1" aria-labelledby="addPatientModalLabel" aria-hidden="true" style="z-index: 1055;">
+    <div class="modal fade" id="addPatientModal" tabindex="-1" aria-labelledby="addPatientModalLabel" aria-hidden="true" style="z-index: 2000 !important;">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">

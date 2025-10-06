@@ -1,132 +1,175 @@
 /**
- * Theme Manager for Tierphysio Manager
- * Handles light/dark mode switching with localStorage persistence
- * Prevents FOUC and animation glitches - FIXED VERSION
+ * Tierphysio Manager - Theme Management
+ * Single icon display, no gray button
  * @version 3.0.0
  */
 
 (function() {
     'use strict';
 
-    // Configuration
     const STORAGE_KEY = 'tierphysio-theme';
-    const THEME_LIGHT = 'light';
-    const THEME_DARK = 'dark';
-    const DEFAULT_THEME = THEME_LIGHT;
+    const DEFAULT_THEME = 'light';
     
-    /**
-     * Initialize theme immediately (prevent FOUC)
-     */
-    function initThemeEarly() {
-        const savedTheme = localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
-        document.documentElement.setAttribute('data-theme', savedTheme);
+    // Prevent multiple initializations
+    if (window.ThemeManager && window.ThemeManager.initialized) {
+        console.warn('Theme manager already initialized');
+        return;
     }
-    
-    // Apply theme as early as possible
-    initThemeEarly();
-    
+
+    window.ThemeManager = {
+        initialized: false,
+        currentTheme: DEFAULT_THEME
+    };
+
     /**
-     * Theme Manager
+     * Get the current theme from localStorage or default
      */
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = document.getElementById('themeIcon');
-        const html = document.documentElement;
-        
-        // Get current theme
-        function getCurrentTheme() {
-            return html.getAttribute('data-theme') || DEFAULT_THEME;
+    function getCurrentTheme() {
+        try {
+            return localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
+        } catch (e) {
+            console.warn('LocalStorage not available:', e);
+            return DEFAULT_THEME;
         }
-        
-        // Update icon based on theme
-        function updateIcon() {
-            const isDark = getCurrentTheme() === THEME_DARK;
-            // Our theme toggle has both icons, CSS shows/hides based on theme
-            if (themeToggle) {
-                themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-            }
+    }
+
+    /**
+     * Save theme preference to localStorage
+     */
+    function saveTheme(theme) {
+        try {
+            localStorage.setItem(STORAGE_KEY, theme);
+            window.ThemeManager.currentTheme = theme;
+        } catch (e) {
+            console.warn('Could not save theme:', e);
         }
-        
-        // Apply theme
-        function applyTheme(theme) {
-            // Remove transition during theme switch to prevent flash
-            html.style.transition = 'none';
-            
-            // Apply theme
-            html.setAttribute('data-theme', theme);
-            
-            // Save to localStorage
-            try {
-                localStorage.setItem(STORAGE_KEY, theme);
-            } catch (e) {
-                console.warn('Could not save theme preference:', e);
-            }
-            
-            // Update icon
-            updateIcon();
-            
-            // Update meta theme-color
-            let metaThemeColor = document.querySelector('meta[name="theme-color"]');
-            if (!metaThemeColor) {
-                metaThemeColor = document.createElement('meta');
-                metaThemeColor.name = 'theme-color';
-                document.head.appendChild(metaThemeColor);
-            }
-            metaThemeColor.content = theme === THEME_DARK ? '#121212' : '#7C4DFF';
-            
-            // Re-enable transitions after a brief delay
-            setTimeout(function() {
-                html.style.transition = '';
-            }, 50);
-            
-            // Dispatch custom event
-            window.dispatchEvent(new CustomEvent('themechange', {
-                detail: { theme: theme }
-            }));
+    }
+
+    /**
+     * Apply theme to document
+     */
+    function applyTheme(theme) {
+        // Validate theme
+        if (theme !== 'light' && theme !== 'dark') {
+            theme = DEFAULT_THEME;
         }
+
+        // Apply to document
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.dataset.theme = theme;
         
-        // Toggle theme
-        function toggleTheme() {
-            const currentTheme = getCurrentTheme();
-            const newTheme = currentTheme === THEME_DARK ? THEME_LIGHT : THEME_DARK;
-            applyTheme(newTheme);
-        }
+        // Update body class for compatibility
+        document.body.classList.remove('theme-light', 'theme-dark');
+        document.body.classList.add(`theme-${theme}`);
+
+        // Save preference
+        saveTheme(theme);
+
+        // Update all theme toggle buttons
+        updateThemeButtons(theme);
+
+        // Dispatch custom event
+        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+    }
+
+    /**
+     * Update all theme toggle button states
+     */
+    function updateThemeButtons(theme) {
+        const buttons = document.querySelectorAll('#themeToggle, .theme-toggle');
         
-        // Set up theme toggle button
-        if (themeToggle) {
-            // Remove any existing listeners (prevents duplicate handlers)
-            const newToggle = themeToggle.cloneNode(true);
-            themeToggle.parentNode.replaceChild(newToggle, themeToggle);
+        buttons.forEach(button => {
+            // Remove any inline styles that might make it gray
+            button.style.removeProperty('background');
+            button.style.removeProperty('background-color');
+            button.style.removeProperty('border');
             
-            // Add click handler
-            newToggle.addEventListener('click', function(e) {
+            // Ensure button stays transparent/white
+            button.style.color = 'white';
+            
+            // Update aria-label for accessibility
+            button.setAttribute('aria-label', theme === 'light' ? 'Zu Dunkelmodus wechseln' : 'Zu Hellmodus wechseln');
+            button.setAttribute('title', theme === 'light' ? 'Zu Dunkelmodus wechseln' : 'Zu Hellmodus wechseln');
+        });
+    }
+
+    /**
+     * Toggle between light and dark themes
+     */
+    function toggleTheme() {
+        const currentTheme = getCurrentTheme();
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+    }
+
+    /**
+     * Initialize theme toggle buttons
+     */
+    function initThemeButtons() {
+        const buttons = document.querySelectorAll('#themeToggle, .theme-toggle');
+        
+        buttons.forEach(button => {
+            // Remove any existing listeners (prevent duplicates)
+            button.replaceWith(button.cloneNode(true));
+        });
+
+        // Re-select after cloning
+        const newButtons = document.querySelectorAll('#themeToggle, .theme-toggle');
+        
+        newButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 toggleTheme();
             });
-        }
-        
-        // Initialize icon
-        updateIcon();
-        
-        // Listen for theme changes in other tabs
+
+            // Ensure button is clickable
+            button.style.pointerEvents = 'auto';
+            button.style.cursor = 'pointer';
+        });
+    }
+
+    /**
+     * Initialize theme system
+     */
+    function init() {
+        // Prevent double initialization
+        if (window.ThemeManager.initialized) return;
+
+        // Get and apply saved theme
+        const savedTheme = getCurrentTheme();
+        applyTheme(savedTheme);
+
+        // Initialize buttons
+        initThemeButtons();
+
+        // Listen for storage changes (sync across tabs)
         window.addEventListener('storage', function(e) {
-            if (e.key === STORAGE_KEY) {
-                const newTheme = e.newValue || DEFAULT_THEME;
-                applyTheme(newTheme);
+            if (e.key === STORAGE_KEY && e.newValue) {
+                applyTheme(e.newValue);
             }
         });
+
+        // Mark as initialized
+        window.ThemeManager.initialized = true;
+        console.log(`Theme manager initialized with ${savedTheme} theme`);
+    }
+
+    // Initialize immediately to prevent FOUC
+    if (document.readyState === 'loading') {
+        // Apply theme immediately even before DOM is ready
+        const savedTheme = getCurrentTheme();
+        document.documentElement.setAttribute('data-theme', savedTheme);
         
-        // Keyboard shortcut (Ctrl/Cmd + Shift + T)
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
-                e.preventDefault();
-                toggleTheme();
-            }
-        });
-        
-        // Apply initial theme with all features
-        applyTheme(getCurrentTheme());
-    });
-    
+        // Full init when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM is already loaded
+        init();
+    }
+
+    // Export functions for global use
+    window.toggleTheme = toggleTheme;
+    window.setTheme = applyTheme;
+
 })();

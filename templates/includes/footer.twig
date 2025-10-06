@@ -1,20 +1,2 @@
-<!-- Footer (Scrollable with Content) -->
-<footer class="app-footer">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-6">
-                <p class="mb-0">© 2024 Tierphysio Manager - Entwickelt mit ❤️ für Tierphysiotherapeuten</p>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <div class="footer-links">
-                    <span class="text-muted">Version {{ app_version|default('3.0.0') }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
-
-<!-- Back to Top Button -->
-<button class="back-to-top" aria-label="Zurück nach oben">
-    <i class="bx bx-chevron-up"></i>
-</button>
+{# Unified Footer Component - SSoT Implementation #}
+{% include '/includes/layout/_footer.html' ignore missing %}

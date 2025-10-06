@@ -1,390 +1,433 @@
 /**
- * Tierphysio Manager - Main Application JavaScript
- * Fixed version without UI glitches, animations, and overlays
+ * Tierphysio Manager - Unified App JavaScript
+ * Single source of truth for all interactive elements
  * @version 3.0.0
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     'use strict';
 
-    // ===== KILL ALL PROBLEMATIC ANIMATIONS & OVERLAYS =====
-    // Stop any rogue intervals/animations that might move header controls
-    (function killProblematicAnimations() {
-        // Override setInterval to prevent header animations
-        const origSetInterval = window.setInterval;
-        window.setInterval = function(fn, t) {
-            const fnStr = fn && fn.toString();
-            // Block any intervals that might animate header elements
-            if (fnStr && /move|slide|animate|translateX|header|topbar|search-bar|top-menu/i.test(fnStr)) {
-                console.warn('Blocked problematic animation interval');
-                return 0;
-            }
-            return origSetInterval(fn, t);
-        };
+    // Global state management
+    const AppState = {
+        sidebar: {
+            isOpen: false,
+            element: null,
+            overlay: null
+        },
+        search: {
+            isOpen: false,
+            element: null,
+            input: null,
+            results: null
+        },
+        initialized: false
+    };
 
-        // Clear any existing intervals that might be problematic
-        const highestId = window.setTimeout(function() {
-            for (let i = highestId; i >= 0; i--) {
-                window.clearInterval(i);
-            }
-        }, 0);
+    // Prevent multiple initializations
+    if (window.TierphysioApp && window.TierphysioApp.initialized) {
+        console.warn('App already initialized, skipping...');
+        return;
+    }
 
-        // Remove all overlays that might block clicks
-        document.querySelectorAll('.decor-overlay, .gradient-banner, [data-overlay], .header-overlay, .hero-banner').forEach(el => {
-            el.style.pointerEvents = 'none';
-            el.style.zIndex = '0';
-            el.remove(); // Remove them entirely
-        });
+    window.TierphysioApp = AppState;
 
-        // Ensure header is always on top and clickable
-        const headers = document.querySelectorAll('.app-header, .topbar, header');
-        headers.forEach((header, index) => {
-            if (index === 0) {
-                // Keep only first header
-                header.style.zIndex = '1030';
-                header.style.pointerEvents = 'auto';
-                header.style.position = 'fixed';
-            } else {
-                // Remove duplicate headers
-                header.remove();
-            }
-        });
+    /**
+     * Initialize sidebar functionality
+     */
+    function initSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        
+        if (!sidebar) return;
 
-        // Remove transform/animation styles from header elements
-        document.querySelectorAll('.search-bar, .top-menu, .theme-toggle-btn, .actions').forEach(el => {
-            el.style.transform = 'none';
-            el.style.animation = 'none';
-            el.style.position = 'static';
-        });
-    })();
+        AppState.sidebar.element = sidebar;
+        AppState.sidebar.overlay = overlay;
 
-    // ===== Sidebar Toggle Functionality =====
-    const sidebar = document.querySelector('.sidebar-wrapper');
-    const overlay = document.querySelector('.sidebar-overlay');
-    const burgerBtn = document.getElementById('burgerBtn');
-    const menuToggle = document.getElementById('menuToggle');
-    const toggleBtn = document.querySelector('.mobile-toggle-menu');
-    const collapseBtn = document.querySelector('.toggle-icon');
-    const wrapper = document.querySelector('.wrapper');
-    
-    // Menu toggle handler (new elegant header)
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function(e) {
+        // Menu toggle handler
+        if (menuToggle) {
+            menuToggle.removeEventListener('click', toggleSidebar);
+            menuToggle.addEventListener('click', toggleSidebar);
+        }
+
+        // Desktop sidebar toggle
+        if (sidebarToggle) {
+            sidebarToggle.removeEventListener('click', toggleSidebar);
+            sidebarToggle.addEventListener('click', toggleSidebar);
+        }
+
+        // Close on overlay click
+        if (overlay) {
+            overlay.removeEventListener('click', closeSidebar);
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', handleResize);
+    }
+
+    function toggleSidebar(e) {
+        if (e) {
             e.preventDefault();
             e.stopPropagation();
-            
-            const isDesktop = window.innerWidth >= 992;
-            
-            if (isDesktop) {
-                // Desktop: Toggle wrapper class
-                if (wrapper) {
-                    wrapper.classList.toggle('toggled');
-                }
-            } else {
-                // Mobile: Toggle sidebar and overlay
-                if (sidebar) {
-                    sidebar.classList.toggle('active');
-                }
-                if (overlay) {
-                    overlay.classList.toggle('active');
-                }
-            }
-        });
-    }
-    
-    // Legacy burger button handler (for compatibility)
-    if (burgerBtn) {
-        burgerBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const isDesktop = window.innerWidth >= 992;
-            
-            if (isDesktop) {
-                // Desktop: Toggle wrapper class
-                if (wrapper) {
-                    wrapper.classList.toggle('toggled');
-                }
-            } else {
-                // Mobile: Toggle sidebar and overlay
-                if (sidebar) {
-                    sidebar.classList.toggle('active');
-                }
-                if (overlay) {
-                    overlay.classList.toggle('active');
-                }
-            }
-        });
-    }
-    
-    // Mobile toggle
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const isDesktop = window.innerWidth >= 992;
-            
-            if (isDesktop) {
-                // Desktop: Toggle wrapper class
-                if (wrapper) {
-                    wrapper.classList.toggle('toggled');
-                }
-            } else {
-                // Mobile: Toggle sidebar and overlay
-                if (sidebar) {
-                    sidebar.classList.toggle('active');
-                }
-                if (overlay) {
-                    overlay.classList.toggle('active');
-                }
-            }
-        });
-    }
-    
-    // Desktop collapse button
-    if (collapseBtn) {
-        collapseBtn.addEventListener('click', function(e) {
-            e.preventDefault();
+        }
+
+        const sidebar = AppState.sidebar.element;
+        const overlay = AppState.sidebar.overlay;
+        const isDesktop = window.innerWidth >= 992;
+
+        if (!sidebar) return;
+
+        if (isDesktop) {
+            // Desktop: Toggle wrapper class
+            const wrapper = document.querySelector('.wrapper');
             if (wrapper) {
                 wrapper.classList.toggle('toggled');
             }
-        });
-    }
-    
-    // Close on overlay click (mobile)
-    if (overlay) {
-        overlay.addEventListener('click', function() {
-            if (sidebar) {
-                sidebar.classList.remove('active');
+        } else {
+            // Mobile: Toggle sidebar classes
+            const isOpen = sidebar.classList.contains('open');
+            
+            if (isOpen) {
+                closeSidebar();
+            } else {
+                openSidebar();
             }
-            overlay.classList.remove('active');
-        });
+        }
     }
 
-    // ===== Search Functionality =====
-    const searchBtn = document.getElementById('searchBtn');
-    const searchOverlay = document.getElementById('searchOverlay');
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    
-    if (searchBtn && searchOverlay) {
-        searchBtn.addEventListener('click', function(e) {
+    function openSidebar() {
+        const sidebar = AppState.sidebar.element;
+        const overlay = AppState.sidebar.overlay;
+
+        if (sidebar) {
+            sidebar.classList.add('open', 'active');
+            AppState.sidebar.isOpen = true;
+        }
+        
+        if (overlay) {
+            overlay.classList.add('active', 'show');
+        }
+    }
+
+    function closeSidebar() {
+        const sidebar = AppState.sidebar.element;
+        const overlay = AppState.sidebar.overlay;
+
+        if (sidebar) {
+            sidebar.classList.remove('open', 'active');
+            AppState.sidebar.isOpen = false;
+        }
+        
+        if (overlay) {
+            overlay.classList.remove('active', 'show');
+        }
+    }
+
+    /**
+     * Initialize search functionality
+     */
+    function initSearch() {
+        const searchBtn = document.getElementById('globalSearchBtn');
+        const searchBar = document.getElementById('globalSearchBar');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const closeBtn = document.getElementById('closeSearchBtn');
+
+        if (!searchBar) return;
+
+        AppState.search.element = searchBar;
+        AppState.search.input = searchInput;
+        AppState.search.results = searchResults;
+
+        // Search button handler
+        if (searchBtn) {
+            searchBtn.removeEventListener('click', toggleSearch);
+            searchBtn.addEventListener('click', toggleSearch);
+        }
+
+        // Close button handler
+        if (closeBtn) {
+            closeBtn.removeEventListener('click', closeSearch);
+            closeBtn.addEventListener('click', closeSearch);
+        }
+
+        // Search input handler
+        if (searchInput) {
+            searchInput.removeEventListener('input', handleSearch);
+            searchInput.addEventListener('input', handleSearch);
+        }
+
+        // Click outside to close
+        if (searchBar) {
+            searchBar.addEventListener('click', function(e) {
+                if (e.target === searchBar) {
+                    closeSearch();
+                }
+            });
+        }
+    }
+
+    function toggleSearch(e) {
+        if (e) {
             e.preventDefault();
             e.stopPropagation();
-            searchOverlay.style.display = 'flex';
-            searchOverlay.classList.add('active');
+        }
+
+        const isOpen = AppState.search.isOpen;
+        
+        if (isOpen) {
+            closeSearch();
+        } else {
+            openSearch();
+        }
+    }
+
+    function openSearch() {
+        const searchBar = AppState.search.element;
+        const searchInput = AppState.search.input;
+
+        if (searchBar) {
+            searchBar.style.display = 'flex';
+            searchBar.classList.add('active');
+            AppState.search.isOpen = true;
+
             if (searchInput) {
-                searchInput.focus();
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        }
+    }
+
+    function closeSearch() {
+        const searchBar = AppState.search.element;
+
+        if (searchBar) {
+            searchBar.style.display = 'none';
+            searchBar.classList.remove('active');
+            AppState.search.isOpen = false;
+        }
+    }
+
+    let searchTimeout;
+    function handleSearch() {
+        clearTimeout(searchTimeout);
+        
+        const searchInput = AppState.search.input;
+        const searchResults = AppState.search.results;
+        
+        if (!searchInput || !searchResults) return;
+        
+        const query = searchInput.value.trim();
+        
+        if (query.length < 2) {
+            searchResults.innerHTML = '';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/search.php?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        let html = '';
+                        data.forEach(item => {
+                            const badge = item.type === 'patient' ? 
+                                '<span class="badge bg-primary">Patient</span>' : 
+                                '<span class="badge bg-success">Besitzer</span>';
+                            const url = item.type === 'patient' ? 
+                                `/patient.php?id=${item.id}` : 
+                                `/owner.php?id=${item.id}`;
+                            
+                            html += `
+                                <div class="result-item" onclick="window.location.href='${url}'">
+                                    ${badge}
+                                    <span>${item.label}</span>
+                                </div>
+                            `;
+                        });
+                        searchResults.innerHTML = html;
+                    } else {
+                        searchResults.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    searchResults.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
+                });
+        }, 300);
+    }
+
+    /**
+     * Initialize user dropdown
+     */
+    function initUserDropdown() {
+        const userToggle = document.getElementById('userMenuToggle');
+        const userMenu = document.getElementById('userMenu');
+
+        if (!userToggle || !userMenu) return;
+
+        // Click outside to close
+        document.addEventListener('click', function(e) {
+            if (!userToggle.contains(e.target) && !userMenu.contains(e.target)) {
+                const dropdown = bootstrap.Dropdown.getInstance(userToggle);
+                if (dropdown) {
+                    dropdown.hide();
+                }
             }
         });
     }
 
-    // Open search
-    window.openSearch = function() {
-        const searchOverlay = document.getElementById('searchOverlay');
-        const searchInput = document.getElementById('searchInput');
-        if (searchOverlay) {
-            searchOverlay.style.display = 'flex';
-            searchOverlay.classList.add('active');
-            if (searchInput) {
-                searchInput.focus();
-            }
-        }
-    };
-
-    // Close search
-    window.closeSearch = function() {
-        const searchOverlay = document.getElementById('searchOverlay');
-        if (searchOverlay) {
-            searchOverlay.style.display = 'none';
-            searchOverlay.classList.remove('active');
-        }
-    };
-
-    // Search functionality
-    if (searchInput && searchResults) {
-        let searchTimeout;
+    /**
+     * Initialize active navigation highlighting
+     */
+    function initActiveNavigation() {
+        const currentPath = window.location.pathname.split('/').pop() || 'dashboard.php';
+        const navLinks = document.querySelectorAll('.nav-link[data-route]');
         
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            const route = link.getAttribute('data-route');
             
-            if (query.length < 2) {
-                searchResults.innerHTML = '';
-                return;
+            // Remove any existing active classes
+            link.classList.remove('active');
+            const parent = link.closest('li');
+            if (parent) {
+                parent.classList.remove('active');
             }
             
-            searchTimeout = setTimeout(() => {
-                fetch(`/api/search.php?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.length > 0) {
-                            let html = '';
-                            data.forEach(item => {
-                                const badge = item.type === 'patient' ? 
-                                    '<span class="badge bg-primary">Patient</span>' : 
-                                    '<span class="badge bg-success">Besitzer</span>';
-                                html += `
-                                    <div class="result-item" onclick="window.location.href='${item.type === 'patient' ? 'patient' : 'owner'}.php?id=${item.id}'">
-                                        ${badge}
-                                        <span>${item.label}</span>
-                                    </div>
-                                `;
-                            });
-                            searchResults.innerHTML = html;
-                        } else {
-                            searchResults.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Search error:', error);
-                        searchResults.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
-                    });
-            }, 300);
+            // Check if this is the current page
+            if (href && (href.includes(currentPath) || currentPath.includes(route))) {
+                link.classList.add('active');
+                if (parent) {
+                    parent.classList.add('active');
+                }
+            }
         });
     }
 
-    // ===== Back to Top Button =====
-    const backToTopBtn = document.querySelector('.back-to-top');
-    
-    if (backToTopBtn) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 300) {
-                backToTopBtn.classList.add('show');
-            } else {
-                backToTopBtn.classList.remove('show');
-            }
-        });
-        
-        backToTopBtn.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+    /**
+     * Fix modal z-index issues
+     */
+    function initModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('show.bs.modal', function() {
+                // Ensure proper z-index
+                setTimeout(() => {
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.style.zIndex = '1040';
+                    }
+                    modal.style.zIndex = '2000';
+                }, 10);
             });
         });
     }
 
-    // ===== Fix Modal Z-Index Issues =====
-    document.querySelectorAll('.modal').forEach(function(modal) {
-        modal.addEventListener('show.bs.modal', function() {
-            // Ensure modal and backdrop have correct z-index
-            setTimeout(function() {
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) {
-                    backdrop.style.zIndex = '1040';
-                }
-                modal.style.zIndex = '1050';
-                const dialog = modal.querySelector('.modal-dialog');
-                if (dialog) {
-                    dialog.style.zIndex = '1060';
-                }
-            }, 10);
+    /**
+     * Initialize Bootstrap components
+     */
+    function initBootstrapComponents() {
+        // Tooltips
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltips.forEach(el => {
+            new bootstrap.Tooltip(el);
         });
-    });
 
-    // ===== Initialize Bootstrap Components =====
-    // Tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Popovers
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    popoverTriggerList.forEach(function(popoverTriggerEl) {
-        new bootstrap.Popover(popoverTriggerEl);
-    });
-
-    // ===== Form Validation =====
-    const forms = document.querySelectorAll('.needs-validation');
-    forms.forEach(function(form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
-    });
-
-    // ===== Auto-hide Alerts =====
-    const autoAlerts = document.querySelectorAll('.alert.auto-dismiss');
-    autoAlerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-    });
-
-    // ===== Active Navigation Highlighting =====
-    const currentPath = window.location.pathname.split('/').pop() || 'dashboard.php';
-    const navLinks = document.querySelectorAll('.metismenu li a, .main-nav a');
-    
-    navLinks.forEach(function(link) {
-        const href = link.getAttribute('href');
-        if (href === currentPath) {
-            link.classList.add('active');
-            const parent = link.closest('li');
-            if (parent) {
-                parent.classList.add('active');
-            }
-        }
-    });
-
-    // ===== Initialize MetisMenu if available =====
-    if (typeof $ !== 'undefined' && $.fn.metisMenu) {
-        $('#menu').metisMenu();
-    }
-
-    // ===== Initialize DataTables if available =====
-    if (typeof $ !== 'undefined' && $.fn.DataTable) {
-        $('.datatable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/de-DE.json"
-            },
-            "pageLength": 25,
-            "responsive": true,
-            "order": [[0, "desc"]]
+        // Popovers
+        const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
+        popovers.forEach(el => {
+            new bootstrap.Popover(el);
         });
     }
 
-    // ===== File Input Preview =====
-    const fileInputs = document.querySelectorAll('.custom-file-input');
-    fileInputs.forEach(function(input) {
-        input.addEventListener('change', function() {
-            const fileName = this.files[0]?.name || 'Datei auswählen';
-            const label = this.nextElementSibling;
-            if (label && label.classList.contains('custom-file-label')) {
-                label.textContent = fileName;
-            }
+    /**
+     * Initialize form validation
+     */
+    function initFormValidation() {
+        const forms = document.querySelectorAll('.needs-validation');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
         });
-    });
+    }
 
-    // ===== Handle window resize =====
-    window.addEventListener('resize', function() {
+    /**
+     * Handle window resize
+     */
+    function handleResize() {
         const isDesktop = window.innerWidth >= 992;
         
-        if (isDesktop && sidebar) {
-            // Remove mobile classes on desktop
-            sidebar.classList.remove('active');
-            if (overlay) {
-                overlay.classList.remove('active');
-            }
-        }
-    });
-});
-
-// ===== Mobile Search Toggle =====
-window.toggleMobileSearch = function() {
-    const overlay = document.getElementById('mobileSearchOverlay');
-    if (overlay) {
-        overlay.classList.toggle('active');
-        if (overlay.classList.contains('active')) {
-            const input = document.getElementById('mobileSearchInput');
-            if (input) {
-                input.focus();
-            }
+        if (isDesktop && AppState.sidebar.element) {
+            // Close mobile sidebar on desktop resize
+            closeSidebar();
         }
     }
-};
+
+    /**
+     * Remove problematic elements and animations
+     */
+    function cleanupProblematicElements() {
+        // Remove duplicate headers
+        const headers = document.querySelectorAll('.app-header, .topbar');
+        if (headers.length > 1) {
+            for (let i = 1; i < headers.length; i++) {
+                headers[i].remove();
+            }
+        }
+
+        // Remove overlay elements that might block interactions
+        const overlays = document.querySelectorAll('.decor-overlay, .gradient-banner, .header-overlay');
+        overlays.forEach(el => el.remove());
+
+        // Ensure header is clickable
+        const header = document.querySelector('.app-header, .topbar');
+        if (header) {
+            header.style.pointerEvents = 'auto';
+            header.style.zIndex = '1030';
+        }
+    }
+
+    /**
+     * Main initialization
+     */
+    function init() {
+        // Prevent double initialization
+        if (AppState.initialized) return;
+
+        // Clean up first
+        cleanupProblematicElements();
+
+        // Initialize all components
+        initSidebar();
+        initSearch();
+        initUserDropdown();
+        initActiveNavigation();
+        initModals();
+        initBootstrapComponents();
+        initFormValidation();
+
+        // Mark as initialized
+        AppState.initialized = true;
+        console.log('Tierphysio Manager initialized successfully');
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM is already loaded
+        init();
+    }
+
+    // Export functions for global use if needed
+    window.openSearch = openSearch;
+    window.closeSearch = closeSearch;
+    window.toggleSidebar = toggleSidebar;
+
+})();
