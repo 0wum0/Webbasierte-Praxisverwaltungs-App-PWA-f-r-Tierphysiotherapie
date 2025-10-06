@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Tierphysio Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">API Test Suite - Tierphysio Manager</h1>
+        
+        <div class="alert alert-info">
+            <strong>Info:</strong> Diese Seite testet die reparierten API-Endpunkte für JSON-Kommunikation.
+        </div>
+
+        <!-- Health Check -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">1. Health Check</h5>
+            </div>
+            <div class="card-body">
+                <p>Testet den grundlegenden API Health-Endpunkt</p>
+                <button class="btn btn-primary" onclick="testHealth()">Test Health</button>
+                <div id="health-result"></div>
+            </div>
+        </div>
+
+        <!-- Search Test -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">2. Search API</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="text" id="search-query" class="form-control" placeholder="Suchbegriff eingeben..." value="Test">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary" onclick="testSearch()">Test Search</button>
+                    </div>
+                </div>
+                <div id="search-result"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Metrics -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">3. Dashboard Metrics</h5>
+            </div>
+            <div class="card-body">
+                <p>Testet den Dashboard Metrics Endpunkt</p>
+                <button class="btn btn-primary" onclick="testDashboard()">Test Dashboard</button>
+                <div id="dashboard-result"></div>
+            </div>
+        </div>
+
+        <!-- Create Owner -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">4. Create Owner (POST)</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" id="owner-firstname" class="form-control" placeholder="Vorname" value="Max">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="owner-lastname" class="form-control" placeholder="Nachname" value="Mustermann">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="email" id="owner-email" class="form-control" placeholder="Email" value="max@test.de">
+                    </div>
+                </div>
+                <button class="btn btn-primary mt-3" onclick="testCreateOwner()">Test Create Owner</button>
+                <div id="owner-result"></div>
+            </div>
+        </div>
+
+        <!-- Router Test -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">5. Router Actions</h5>
+            </div>
+            <div class="card-body">
+                <p>Testet verschiedene Router-Actions</p>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" onclick="testRouterAction('health')">Health</button>
+                    <button class="btn btn-outline-primary" onclick="testRouterAction('owner_list')">Owner List</button>
+                    <button class="btn btn-outline-primary" onclick="testRouterAction('patient_list')">Patient List</button>
+                    <button class="btn btn-outline-primary" onclick="testRouterAction('appointment_list')">Appointments</button>
+                </div>
+                <div id="router-result"></div>
+            </div>
+        </div>
+
+        <!-- Raw Test -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">6. Custom API Test</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <input type="text" id="custom-endpoint" class="form-control" placeholder="Endpoint (z.B. /api/health.php)" value="/api/health.php">
+                    </div>
+                    <div class="col-md-3">
+                        <select id="custom-method" class="form-control">
+                            <option>GET</option>
+                            <option>POST</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary" onclick="testCustom()">Test</button>
+                    </div>
+                </div>
+                <textarea id="custom-body" class="form-control mt-2" rows="3" placeholder="Request Body (JSON)"></textarea>
+                <div id="custom-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load API Client -->
+    <script src="/public/js/api-client.js"></script>
+    
+    <script>
+        // Helper function to display results
+        function showResult(elementId, data, isError = false) {
+            const resultDiv = document.getElementById(elementId);
+            const className = isError ? 'error' : 'success';
+            const prefix = isError ? '❌ ERROR:\n' : '✅ SUCCESS:\n';
+            
+            let content = prefix;
+            if (typeof data === 'object') {
+                content += JSON.stringify(data, null, 2);
+            } else {
+                content += data;
+            }
+            
+            resultDiv.innerHTML = `<div class="result-box ${className}">${content}</div>`;
+        }
+
+        // Test functions
+        async function testHealth() {
+            try {
+                const response = await fetch('/api/health.php');
+                const data = await response.json();
+                showResult('health-result', data);
+            } catch (error) {
+                showResult('health-result', error.message, true);
+            }
+        }
+
+        async function testSearch() {
+            const query = document.getElementById('search-query').value;
+            try {
+                const response = await fetch(`/api/search.php?q=${encodeURIComponent(query)}`);
+                const contentType = response.headers.get('content-type');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Non-JSON response. Content-Type: ${contentType}`);
+                }
+                
+                const data = await response.json();
+                showResult('search-result', data);
+            } catch (error) {
+                showResult('search-result', error.message, true);
+            }
+        }
+
+        async function testDashboard() {
+            try {
+                const response = await fetch('/api/dashboard_metrics.php');
+                const contentType = response.headers.get('content-type');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Non-JSON response. Content-Type: ${contentType}`);
+                }
+                
+                const data = await response.json();
+                showResult('dashboard-result', data);
+            } catch (error) {
+                showResult('dashboard-result', error.message, true);
+            }
+        }
+
+        async function testCreateOwner() {
+            const data = {
+                action: 'owner_create',
+                first_name: document.getElementById('owner-firstname').value,
+                last_name: document.getElementById('owner-lastname').value,
+                email: document.getElementById('owner-email').value
+            };
+            
+            try {
+                const response = await fetch('/api/index.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Non-JSON response. Content-Type: ${contentType}`);
+                }
+                
+                const result = await response.json();
+                showResult('owner-result', result);
+            } catch (error) {
+                showResult('owner-result', error.message, true);
+            }
+        }
+
+        async function testRouterAction(action) {
+            try {
+                const response = await fetch(`/api/index.php?action=${action}`);
+                const contentType = response.headers.get('content-type');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Non-JSON response. Content-Type: ${contentType}`);
+                }
+                
+                const data = await response.json();
+                showResult('router-result', data);
+            } catch (error) {
+                showResult('router-result', error.message, true);
+            }
+        }
+
+        async function testCustom() {
+            const endpoint = document.getElementById('custom-endpoint').value;
+            const method = document.getElementById('custom-method').value;
+            const bodyText = document.getElementById('custom-body').value;
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                };
+                
+                if (method === 'POST' && bodyText) {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = bodyText;
+                }
+                
+                const response = await fetch(endpoint, options);
+                
+                // Get response headers info
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+                
+                const result = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: headers,
+                    body: data
+                };
+                
+                showResult('custom-result', result, !response.ok);
+            } catch (error) {
+                showResult('custom-result', error.message, true);
+            }
+        }
+
+        // Test API client if loaded
+        window.addEventListener('load', () => {
+            if (window.TierphysioAPI) {
+                console.log('✅ API Client loaded successfully');
+                console.log('Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.TierphysioAPI)));
+            } else {
+                console.warn('⚠️ API Client not loaded');
+            }
+        });
+    </script>
+</body>
+</html>

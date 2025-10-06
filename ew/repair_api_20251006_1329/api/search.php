@@ -1,18 +1,14 @@
 <?php
-/**
- * Search API Endpoint
- * Searches for patients and owners
- */
+declare(strict_types=1);
 
-// Include bootstrap for consistent JSON handling
-require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/../includes/db.php';
 
-// Check authentication
-check_auth();
+header('Content-Type: application/json; charset=utf-8');
 
 $q = trim($_GET['q'] ?? '');
 if ($q === '') {
-    json_ok([]);
+    echo json_encode([]);
+    exit;
 }
 
 $results = [];
@@ -56,5 +52,4 @@ foreach ($stmt as $row) {
     ];
 }
 
-// Return results using bootstrap function
-json_ok($results);
+echo json_encode($results, JSON_UNESCAPED_UNICODE);

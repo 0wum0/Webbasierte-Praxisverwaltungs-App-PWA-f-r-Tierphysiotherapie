@@ -225,13 +225,10 @@
             return;
         }
         
-        searchTimeout = setTimeout(async () => {
-            try {
-                // Use the API client if available
-                if (window.TierphysioAPI) {
-                    const response = await window.TierphysioAPI.search(query);
-                    const data = response.data || response;
-                    
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/search.php?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
                     if (data && data.length > 0) {
                         let html = '';
                         data.forEach(item => {
@@ -253,44 +250,11 @@
                     } else {
                         searchResults.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
                     }
-                } else {
-                    // Fallback to direct fetch
-                    const response = await fetch(`/api/search.php?q=${encodeURIComponent(query)}`);
-                    const contentType = response.headers.get('content-type');
-                    
-                    if (!contentType || !contentType.includes('application/json')) {
-                        throw new Error('Server returned non-JSON response');
-                    }
-                    
-                    const result = await response.json();
-                    const data = result.data || result;
-                    
-                    if (data && data.length > 0) {
-                        let html = '';
-                        data.forEach(item => {
-                            const badge = item.type === 'patient' ? 
-                                '<span class="badge bg-primary">Patient</span>' : 
-                                '<span class="badge bg-success">Besitzer</span>';
-                            const url = item.type === 'patient' ? 
-                                `/patient.php?id=${item.id}` : 
-                                `/owner.php?id=${item.id}`;
-                            
-                            html += `
-                                <div class="result-item" onclick="window.location.href='${url}'">
-                                    ${badge}
-                                    <span>${item.label}</span>
-                                </div>
-                            `;
-                        });
-                        searchResults.innerHTML = html;
-                    } else {
-                        searchResults.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
-                    }
-                }
-            } catch (error) {
-                console.error('Search error:', error);
-                searchResults.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
-            }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    searchResults.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
+                });
         }, 300);
     }
 
