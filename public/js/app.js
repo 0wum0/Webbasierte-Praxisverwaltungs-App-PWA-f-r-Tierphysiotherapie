@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Ensure header is always on top and clickable
-        const headers = document.querySelectorAll('.topbar, header');
+        const headers = document.querySelectorAll('.app-header, .topbar, header');
         headers.forEach((header, index) => {
             if (index === 0) {
                 // Keep only first header
@@ -62,11 +62,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.querySelector('.sidebar-wrapper');
     const overlay = document.querySelector('.sidebar-overlay');
     const burgerBtn = document.getElementById('burgerBtn');
+    const menuToggle = document.getElementById('menuToggle');
     const toggleBtn = document.querySelector('.mobile-toggle-menu');
     const collapseBtn = document.querySelector('.toggle-icon');
     const wrapper = document.querySelector('.wrapper');
     
-    // Burger button handler
+    // Menu toggle handler (new elegant header)
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isDesktop = window.innerWidth >= 992;
+            
+            if (isDesktop) {
+                // Desktop: Toggle wrapper class
+                if (wrapper) {
+                    wrapper.classList.toggle('toggled');
+                }
+            } else {
+                // Mobile: Toggle sidebar and overlay
+                if (sidebar) {
+                    sidebar.classList.toggle('active');
+                }
+                if (overlay) {
+                    overlay.classList.toggle('active');
+                }
+            }
+        });
+    }
+    
+    // Legacy burger button handler (for compatibility)
     if (burgerBtn) {
         burgerBtn.addEventListener('click', function(e) {
             e.preventDefault();
