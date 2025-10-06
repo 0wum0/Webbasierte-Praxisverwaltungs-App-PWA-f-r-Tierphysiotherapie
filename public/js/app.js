@@ -180,8 +180,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Open search
+    window.openSearch = function() {
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        if (searchOverlay) {
+            searchOverlay.style.display = 'flex';
+            searchOverlay.classList.add('active');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+    };
+
     // Close search
     window.closeSearch = function() {
+        const searchOverlay = document.getElementById('searchOverlay');
         if (searchOverlay) {
             searchOverlay.style.display = 'none';
             searchOverlay.classList.remove('active');

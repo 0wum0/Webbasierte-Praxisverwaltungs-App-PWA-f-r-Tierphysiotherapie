@@ -41,9 +41,7 @@
         // Update icon based on theme
         function updateIcon() {
             const isDark = getCurrentTheme() === THEME_DARK;
-            if (themeIcon) {
-                themeIcon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-            }
+            // Our theme toggle has both icons, CSS shows/hides based on theme
             if (themeToggle) {
                 themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
             }
