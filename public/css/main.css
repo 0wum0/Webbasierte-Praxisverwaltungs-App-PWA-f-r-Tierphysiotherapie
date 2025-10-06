@@ -71,11 +71,12 @@ html, body {
 }
 
 /* ===== Global Header ===== */
-.app-header {
+.app-header,
+.topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #6C63FF, #8E2DE2);
+  background: linear-gradient(135deg, #7C4DFF, #9C27B0);
   color: #fff;
   padding: 0.8rem 1.5rem;
   border-bottom: 1px solid rgba(255,255,255,0.15);
@@ -376,7 +377,7 @@ html, body {
 
 /* ===== MODAL FIXES - Ensure Visibility ===== */
 .modal {
-    z-index: 1050 !important;
+    z-index: 2000 !important;
 }
 
 .modal-backdrop {
