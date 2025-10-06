@@ -1,12 +1,15 @@
 <?php
 declare(strict_types=1);
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
 
-session_start();
+require_once __DIR__ . '/includes/bootstrap.php';
+$pdo = db();
 
-require_once __DIR__ . "/includes/bootstrap.php";
-require_once __DIR__ . "/includes/twig.php";
+// Safety check
+if (!$pdo) {
+    die("Database connection unavailable.");
+}
+
+require_once __DIR__ . '/includes/twig.php';
 
 // --------------------------
 // Neue Rechnung speichern

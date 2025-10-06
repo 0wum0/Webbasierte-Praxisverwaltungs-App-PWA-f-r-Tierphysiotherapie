@@ -1,10 +1,15 @@
 <?php
 declare(strict_types=1);
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
 
-require_once __DIR__ . "/includes/bootstrap.php";   // DB Verbindung
-require_once __DIR__ . "/includes/twig.php"; // Twig Setup
+require_once __DIR__ . '/includes/bootstrap.php';
+$pdo = db();
+
+// Safety check
+if (!$pdo) {
+    die("Database connection unavailable.");
+}
+
+require_once __DIR__ . '/includes/twig.php'; // Twig Setup
 
 // Patienten laden (mit Besitzer)
 $search = $_GET['search'] ?? '';
@@ -37,9 +42,15 @@ try {
 
     $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (Throwable $e) {
-    echo "<pre>Fehler in patients.php: " . htmlspecialchars($e->getMessage()) . "</pre>";
-    exit;
+} catch (PDOException $e) {
+    // Log the error
+    if (function_exists('logError')) {
+        logError('Database error in patients.php', ['error' => $e->getMessage()]);
+    }
+    
+    // Set empty data to prevent template errors
+    $patients = [];
+    $errorMessage = "❌ Datenbankfehler: " . (APP_ENV === 'development' ? $e->getMessage() : 'Bitte kontaktieren Sie den Administrator.');
 }
 
 // Rendern
@@ -47,9 +58,22 @@ try {
     echo $twig->render("patients.twig", [
         "title"    => "Patientenliste",
         "patients" => $patients,
-        "search"   => $search
+        "search"   => $search,
+        "errorMessage" => $errorMessage ?? null
     ]);
-} catch (Throwable $e) {
-    echo "<pre>Fehler im patients.twig: " . htmlspecialchars($e->getMessage()) . "</pre>";
-    exit;
+} catch (Exception $e) {
+    // Log the error
+    if (function_exists('logError')) {
+        logError('Template error in patients.php', ['error' => $e->getMessage()]);
+    }
+    
+    // Display a user-friendly error page
+    http_response_code(500);
+    echo '<!DOCTYPE html><html><head><title>Fehler</title></head><body>';
+    echo '<h1>Ein Fehler ist aufgetreten</h1>';
+    echo '<p>Die Seite konnte nicht geladen werden. Bitte kontaktieren Sie den Administrator.</p>';
+    if (APP_ENV === 'development') {
+        echo '<pre>' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</pre>';
+    }
+    echo '</body></html>';
 }
