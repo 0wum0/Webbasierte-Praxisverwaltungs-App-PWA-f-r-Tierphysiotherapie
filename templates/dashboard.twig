@@ -7,6 +7,70 @@
     <p class="dashboard-subtitle">Willkommen zurück im Tierphysio Manager</p>
 </div>
 
+<!-- Primary KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bx bx-calendar-check"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="text-muted small mb-1">Termine heute</p>
+                        <h3 class="mb-0">{{ todayStats.today_appointments|default(0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                        <i class="bx bx-group"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="text-muted small mb-1">Aktive Patienten</p>
+                        <h3 class="mb-0">{{ stats.total_patients|default(0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="kpi-icon bg-info bg-opacity-10 text-info">
+                        <i class="bx bx-user-plus"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="text-muted small mb-1">Neue diese Woche</p>
+                        <h3 class="mb-0">{{ stats.treatments_week|default(0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bx bx-receipt"></i>
+                    </div>
+                    <div class="ms-3">
+                        <p class="text-muted small mb-1">Offene Rechnungen</p>
+                        <h3 class="mb-0">{{ stats.open_invoices|default(0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Stats Grid with New Design -->
 <div class="stats-grid">
     <!-- Monthly Income -->
@@ -127,8 +191,32 @@
     </div>
 </div>
 
+<!-- Chart Section -->
+<div class="row mt-4">
+    <div class="col-xl-6 d-flex">
+        <div class="card w-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📊 Einnahmen Übersicht</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="incomeChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6 d-flex">
+        <div class="card w-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📈 Rechnungsstatus</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="invoiceStatusChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# -------- Modal aus patients.twig mit Edit/Delete -------- #}
-<div class="modal fade" id="patientModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="patientModal" tabindex="-1" aria-hidden="true" style="z-index: 2000 !important;">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content owner-modal">
       <div class="modal-header owner-header d-flex justify-content-between align-items-center">
@@ -312,6 +400,99 @@ document.addEventListener("DOMContentLoaded", function() {
       renderInvoices(data.invoices);
     }
   });
+});
+
+// Chart.js Integration
+document.addEventListener('DOMContentLoaded', function() {
+    // Income Chart
+    const incomeCtx = document.getElementById('incomeChart');
+    if (incomeCtx) {
+        new Chart(incomeCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Tag', 'Monat', 'Jahr', 'Gesamt'],
+                datasets: [{
+                    label: 'Einnahmen (€)',
+                    data: [
+                        {{ stats.income_today|default(0) }},
+                        {{ stats.income_month|default(0) }},
+                        {{ stats.income_year|default(0) }},
+                        {{ stats.total_income|default(0) }}
+                    ],
+                    backgroundColor: [
+                        'rgba(124, 77, 255, 0.6)',
+                        'rgba(156, 39, 176, 0.6)',
+                        'rgba(103, 58, 183, 0.6)',
+                        'rgba(63, 81, 181, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(124, 77, 255, 1)',
+                        'rgba(156, 39, 176, 1)',
+                        'rgba(103, 58, 183, 1)',
+                        'rgba(63, 81, 181, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('de-DE') + ' €';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Invoice Status Chart
+    const statusCtx = document.getElementById('invoiceStatusChart');
+    if (statusCtx) {
+        new Chart(statusCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Bezahlt', 'Offen', 'Überfällig'],
+                datasets: [{
+                    data: [
+                        {{ stats.paid_invoices|default(0) }},
+                        {{ stats.open_invoices|default(0) }},
+                        {{ stats.overdue_invoices|default(0) }}
+                    ],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.6)',
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(239, 68, 68, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

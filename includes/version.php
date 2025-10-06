@@ -9,17 +9,22 @@ declare(strict_types=1);
  */
 
 // Current application version
-define('APP_VERSION', '1.3.0');
+define('APP_VERSION', '3.0.0');
 
 // Version history
 define('VERSION_HISTORY', [
+    '3.0.0' => [
+        'date' => '2025-01-06',
+        'changes' => 'Unified header/nav/footer layout, restored KPI dashboard, repaired theme toggle and modal z-index',
+        'type' => 'release'
+    ],
     '1.3.0' => [
         'date' => '2025-01-06',
         'changes' => 'Behandlungspläne, Übungsbibliothek, Fortschrittsverfolgung für Patienten',
         'type' => 'feature'
     ],
     '1.2.0' => [
-        'date' => '2025-01-06',
+        'date' => '2025-01-05',
         'changes' => 'KPI Dashboard 2.0 mit Live-Statistiken, Chart.js Integration, Update-System mit Migrationserkennung',
         'type' => 'feature'
     ],
