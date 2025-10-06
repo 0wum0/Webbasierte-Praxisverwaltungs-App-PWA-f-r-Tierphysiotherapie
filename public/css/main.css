@@ -180,6 +180,8 @@ html, body {
   overflow: hidden;
   border: none;
   margin-top: 10px;
+  z-index: 1050 !important;
+  pointer-events: auto !important;
 }
 
 [data-theme="dark"] .dropdown-menu {
@@ -1226,7 +1228,7 @@ header,
     bottom: 0;
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
-    z-index: 1045;
+    z-index: 10000 !important;
     display: none;
     align-items: center;
     justify-content: center;
@@ -1289,6 +1291,8 @@ header,
     margin-top: 1.5rem;
     max-height: 400px;
     overflow-y: auto;
+    position: relative;
+    z-index: 10001 !important;
 }
 
 .result-item {

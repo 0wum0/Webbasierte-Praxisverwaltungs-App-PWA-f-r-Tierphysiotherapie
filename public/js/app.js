@@ -429,5 +429,6 @@
     window.openSearch = openSearch;
     window.closeSearch = closeSearch;
     window.toggleSidebar = toggleSidebar;
+    window.sidebarToggle = toggleSidebar; // Legacy alias
 
 })();

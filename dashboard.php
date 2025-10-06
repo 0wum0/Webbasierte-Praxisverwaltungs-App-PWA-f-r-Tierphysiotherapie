@@ -168,7 +168,7 @@ if ($db) {
         $stmt->execute();
         $recentActivities = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Monthly income chart data (last 12 months)
+        // Monthly income Chart.js data (last 12 months)
         $stmt = $db->prepare("
             SELECT 
                 DATE_FORMAT(invoice_date, '%Y-%m') as month,
