@@ -1,0 +1,20 @@
+# 🧠 Cursor Auto-Integrity Check
+# Tierphysio Manager - Automatische Code-Validierung vor jedem Commit
+
+tasks:
+  - name: "Integrity Auto-Check"
+    trigger: "beforeCommit"
+    action:
+      run: |
+        echo "🔍 Prüfe Integrität der Anwendung über ew.makeit.uno ..."
+        STATUS=$(curl -s https://ew.makeit.uno/integrity.php | grep -E '❌|⚠️')
+        if [ -n "$STATUS" ]; then
+          echo "❌ Integritätsprüfung hat Warnungen oder Fehler gefunden:"
+          echo "$STATUS"
+          echo "------------------------------------------------------------"
+          echo "Bitte überprüfe die Meldungen auf https://ew.makeit.uno/integrity.php"
+          echo "und behebe sie, bevor du committest."
+          exit 1
+        else
+          echo "✅ Integritätsprüfung erfolgreich – alles stabil!"
+        fi
