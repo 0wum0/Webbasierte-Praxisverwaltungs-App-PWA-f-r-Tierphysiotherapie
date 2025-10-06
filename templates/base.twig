@@ -55,6 +55,21 @@
     <!-- Modals -->
     {% block modals %}{% endblock %}
     
+    <!-- Search Detail Modal -->
+    <div class="modal fade" id="searchDetailModal" tabindex="-1" aria-labelledby="searchDetailModalLabel" aria-hidden="true" style="z-index: 2000 !important;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="searchDetailModalLabel">Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="searchDetailContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
