@@ -109,23 +109,22 @@
         const buttons = document.querySelectorAll('#themeToggle, .theme-toggle');
         
         buttons.forEach(button => {
-            // Remove any existing listeners (prevent duplicates)
-            button.replaceWith(button.cloneNode(true));
-        });
-
-        // Re-select after cloning
-        const newButtons = document.querySelectorAll('#themeToggle, .theme-toggle');
-        
-        newButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
+            // Remove old event listeners by cloning
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            
+            // Add click handler
+            newButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 toggleTheme();
             });
 
             // Ensure button is clickable
-            button.style.pointerEvents = 'auto';
-            button.style.cursor = 'pointer';
+            newButton.style.pointerEvents = 'auto';
+            newButton.style.cursor = 'pointer';
+            newButton.style.position = 'relative';
+            newButton.style.zIndex = '1050';
         });
     }
 

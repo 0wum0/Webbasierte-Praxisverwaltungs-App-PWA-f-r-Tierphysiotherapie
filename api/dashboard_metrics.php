@@ -267,10 +267,24 @@ try {
         'upcoming_appointments' => $upcomingAppointments
     ];
     
+    // Add chart-specific data for easier consumption
+    $metrics['monthlyIncome'] = [
+        'labels' => array_slice($metrics['monthly_chart']['labels'], -6),  // Last 6 months
+        'data' => array_slice($metrics['monthly_chart']['revenue'], -6)
+    ];
+    
+    $metrics['invoiceStatus'] = [
+        'paid' => $metrics['invoices']['paid'],
+        'open' => $metrics['invoices']['open'],
+        'overdue' => $metrics['invoices']['overdue']
+    ];
+    
     // Success response
     echo json_encode([
         'success' => true,
-        'data' => $metrics
+        'data' => $metrics,
+        'monthlyIncome' => $metrics['monthlyIncome'],
+        'invoiceStatus' => $metrics['invoiceStatus']
     ], JSON_PRETTY_PRINT);
     
 } catch (Exception $e) {
