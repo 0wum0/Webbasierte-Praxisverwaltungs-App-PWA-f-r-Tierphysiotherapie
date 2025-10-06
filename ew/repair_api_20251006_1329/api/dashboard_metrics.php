@@ -12,11 +12,18 @@ declare(strict_types=1);
  * - Invoice status
  */
 
-// Include API bootstrap for consistent JSON handling
-require_once __DIR__ . '/bootstrap.php';
+header('Content-Type: application/json');
+header('Cache-Control: no-cache, must-revalidate');
+
+// Include bootstrap
+require_once dirname(__DIR__) . '/includes/bootstrap.php';
 
 // Check authentication
-check_auth();
+if (!function_exists('auth_check') || !auth_check()) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
 
 try {
     // Today's date
@@ -273,14 +280,18 @@ try {
     ];
     
     // Success response
-    json_ok([
+    echo json_encode([
+        'success' => true,
         'data' => $metrics,
         'monthlyIncome' => $metrics['monthlyIncome'],
         'invoiceStatus' => $metrics['invoiceStatus']
-    ]);
+    ], JSON_PRETTY_PRINT);
     
 } catch (Exception $e) {
-    json_fail('Fehler beim Abrufen der Metriken', 500, [
-        'details' => defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : null
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Database error',
+        'message' => APP_DEBUG ? $e->getMessage() : 'An error occurred while fetching metrics'
     ]);
 }
