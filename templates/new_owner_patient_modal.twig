@@ -1,0 +1,233 @@
+<!-- Modal for creating new Owner and Patient -->
+<div class="modal fade" id="newOwnerPatientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <span class="modal-icon">➕</span>
+          <span id="modalTitleText">Neuen Besitzer anlegen</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Step 1: Owner Form -->
+        <form id="newOwnerForm" class="step-form">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Vorname</label>
+              <input type="text" class="form-control" name="owner_firstname" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nachname</label>
+              <input type="text" class="form-control" name="owner_lastname" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefon</label>
+              <input type="text" class="form-control" name="owner_phone">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">E-Mail</label>
+              <input type="email" class="form-control" name="owner_email">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Geburtsdatum</label>
+              <input type="date" class="form-control" name="owner_birthdate">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Straße / Hausnr.</label>
+              <input type="text" class="form-control" name="owner_street">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">PLZ</label>
+              <input type="text" class="form-control" name="owner_zipcode">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Ort</label>
+              <input type="text" class="form-control" name="owner_city">
+            </div>
+          </div>
+          <div class="mt-3 text-end">
+            <button type="button" class="btn btn-primary" id="nextStepBtn">
+              <i class="bx bx-right-arrow-alt"></i> Weiter zum Patienten
+            </button>
+          </div>
+        </form>
+
+        <!-- Step 2: Patient Form -->
+        <form id="newPatientForm" class="step-form d-none">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" name="patient_name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tierart</label>
+              <input type="text" class="form-control" name="patient_species" placeholder="z.B. Hund, Katze, Pferd">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Rasse</label>
+              <input type="text" class="form-control" name="patient_breed">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Geburtsdatum</label>
+              <input type="date" class="form-control" name="patient_birthdate">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Symptome / Anamnese</label>
+              <textarea class="form-control" name="patient_symptoms" rows="3"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Aktuelle Medikamente</label>
+              <textarea class="form-control" name="patient_medications" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Aktuelle Therapien</label>
+              <textarea class="form-control" name="patient_therapies" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Allgemeine Notizen</label>
+              <textarea class="form-control" name="patient_notes" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="mt-3 text-end">
+            <button type="button" class="btn btn-secondary me-2" id="backStepBtn">
+              <i class="bx bx-left-arrow-alt"></i> Zurück
+            </button>
+            <button type="submit" class="btn btn-success">
+              <i class="bx bx-check"></i> Besitzer & Patient anlegen
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bx bx-x"></i> Schließen
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const nextBtn = document.getElementById('nextStepBtn');
+  const backBtn = document.getElementById('backStepBtn');
+  const ownerForm = document.getElementById('newOwnerForm');
+  const patientForm = document.getElementById('newPatientForm');
+  const modalTitle = document.getElementById('modalTitleText');
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function() {
+      // Validate owner form
+      if (!ownerForm.checkValidity()) {
+        ownerForm.reportValidity();
+        return;
+      }
+      
+      // Switch to patient form
+      ownerForm.classList.add('d-none');
+      patientForm.classList.remove('d-none');
+      modalTitle.textContent = 'Neuen Patienten anlegen';
+    });
+  }
+  
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      // Switch back to owner form
+      patientForm.classList.add('d-none');
+      ownerForm.classList.remove('d-none');
+      modalTitle.textContent = 'Neuen Besitzer anlegen';
+    });
+  }
+
+  if (patientForm) {
+    patientForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Collect data from both forms
+      const ownerData = new FormData(ownerForm);
+      const patientData = new FormData(patientForm);
+      
+      const data = {
+        action: 'add_owner_patient'
+      };
+      
+      // Add owner data
+      for (let [key, value] of ownerData.entries()) {
+        data[key] = value;
+      }
+      
+      // Add patient data
+      for (let [key, value] of patientData.entries()) {
+        data[key] = value;
+      }
+
+      try {
+        const response = await fetch('api/new_owner_api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Show success notification
+          if (typeof Lobibox !== 'undefined') {
+            Lobibox.notify('success', {
+              msg: result.msg || 'Besitzer und Patient wurden erfolgreich angelegt!',
+              position: 'top right'
+            });
+          }
+          
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('newOwnerPatientModal'));
+          if (modal) {
+            modal.hide();
+          }
+          
+          // Reset forms
+          ownerForm.reset();
+          patientForm.reset();
+          
+          // Reset to first step
+          patientForm.classList.add('d-none');
+          ownerForm.classList.remove('d-none');
+          modalTitle.textContent = 'Neuen Besitzer anlegen';
+          
+          // Reload page if on owners or patients page
+          if (window.location.pathname.includes('owners.php') || window.location.pathname.includes('patients.php')) {
+            setTimeout(() => window.location.reload(), 1500);
+          }
+        } else {
+          throw new Error(result.error || 'Ein Fehler ist aufgetreten');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        if (typeof Lobibox !== 'undefined') {
+          Lobibox.notify('error', {
+            msg: 'Fehler: ' + error.message,
+            position: 'top right'
+          });
+        } else {
+          alert('Fehler: ' + error.message);
+        }
+      }
+    });
+  }
+  
+  // Reset forms when modal is hidden
+  const modal = document.getElementById('newOwnerPatientModal');
+  if (modal) {
+    modal.addEventListener('hidden.bs.modal', function() {
+      ownerForm.reset();
+      patientForm.reset();
+      patientForm.classList.add('d-none');
+      ownerForm.classList.remove('d-none');
+      modalTitle.textContent = 'Neuen Besitzer anlegen';
+    });
+  }
+});
+</script>

@@ -1,38 +1,425 @@
-{% extends "base.twig" %}
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Tierphysio Manager 🐾{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/images/favicon-32x32.png" />
+    
+    <!-- Bootstrap CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="assets/css/bootstrap-extended.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Plugins CSS -->
+    <link href="assets/css/icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/plugins/notifications/css/lobibox.min.css" />
+    <link href="assets/plugins/simplebar/css/simplebar.css" rel="stylesheet" />
+    <link href="assets/plugins/metismenu/css/metisMenu.min.css" rel="stylesheet" />
+    <link href="assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css" rel="stylesheet" />
+    <link href="assets/plugins/datatable/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    
+    <!-- Main App CSS -->
+    <link href="assets/css/app.css" rel="stylesheet" />
+    <link href="assets/css/icons.css" rel="stylesheet" />
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="assets/css/dark-theme.css" />
+    <link rel="stylesheet" href="assets/css/semi-dark.css" />
+    <link rel="stylesheet" href="assets/css/header-colors.css" />
+    
+    {% block styles %}{% endblock %}
+</head>
 
-{% block title %}{{ title|default("Tierphysio Manager 🐾") }}{% endblock %}
+<body>
+    <!--wrapper-->
+    <div class="wrapper">
+        <!--sidebar wrapper -->
+        <div class="sidebar-wrapper" data-simplebar="true">
+            <div class="sidebar-header">
+                <div>
+                    <img src="assets/images/logo-icon.png" class="logo-icon" alt="logo icon">
+                </div>
+                <div>
+                    <h4 class="logo-text">Tierphysio</h4>
+                </div>
+                <div class="toggle-icon ms-auto"><i class='bx bx-arrow-back'></i></div>
+            </div>
+            <!--navigation-->
+            <ul class="metismenu" id="menu">
+                <li>
+                    <a href="dashboard.php">
+                        <div class="parent-icon"><i class='bx bx-home-alt'></i></div>
+                        <div class="menu-title">Dashboard</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="patients.php">
+                        <div class="parent-icon"><i class='bx bx-heart'></i></div>
+                        <div class="menu-title">Patienten</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="owners.php">
+                        <div class="parent-icon"><i class='bx bx-user'></i></div>
+                        <div class="menu-title">Besitzer</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#newOwnerPatientModal">
+                        <div class="parent-icon"><i class='bx bx-user-plus'></i></div>
+                        <div class="menu-title">Besitzer & Patient</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="appointments.php">
+                        <div class="parent-icon"><i class='bx bx-calendar'></i></div>
+                        <div class="menu-title">Termine</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="invoices.php">
+                        <div class="parent-icon"><i class='bx bx-receipt'></i></div>
+                        <div class="menu-title">Rechnungen</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="settings.php">
+                        <div class="parent-icon"><i class='bx bx-cog'></i></div>
+                        <div class="menu-title">Einstellungen</div>
+                    </a>
+                </li>
+            </ul>
+            <!--end navigation-->
+        </div>
+        <!--end sidebar wrapper -->
+        
+        <!--start header -->
+        <header>
+            <div class="topbar d-flex align-items-center">
+                <nav class="navbar navbar-expand gap-3">
+                    <div class="mobile-toggle-menu"><i class='bx bx-menu'></i></div>
 
-{% block content %}
-    {% block inner_content %}
-    <!-- Seiteninhalt hier -->
-    {% endblock %}
-{% endblock %}
+                    <div class="position-relative search-bar d-lg-block d-none" data-bs-toggle="modal" data-bs-target="#SearchModal">
+                        <input class="form-control px-5" disabled type="search" placeholder="Search">
+                        <span class="position-absolute top-50 search-show ms-3 translate-middle-y start-0 top-50 fs-5"><i class='bx bx-search'></i></span>
+                    </div>
 
-{% block scripts %}
-{{ parent() }}
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Navigation aktiv markieren
-    const currentPath = window.location.pathname.split('/').pop();
-    document.querySelectorAll('.nav-item a').forEach(link => {
-        if (link.getAttribute('href') && link.getAttribute('href').includes(currentPath)) {
-            link.classList.add('active');
+                    <div class="top-menu ms-auto">
+                        <ul class="navbar-nav align-items-center gap-1">
+                            <li class="nav-item mobile-search-icon d-flex d-lg-none">
+                                <a class="nav-link" href="avascript:;"><i class='bx bx-search'></i></a>
+                            </li>
+                            
+                            <li class="nav-item dropdown dropdown-app">
+                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" data-bs-toggle="dropdown" href="javascript:;"><i class='bx bx-grid-alt'></i></a>
+                                <div class="dropdown-menu dropdown-menu-end p-0">
+                                    <div class="app-container p-2 my-2">
+                                        <div class="row gx-0 gy-2 row-cols-3 justify-content-center p-2">
+                                            <div class="col">
+                                                <a href="javascript:;">
+                                                    <div class="app-box text-center">
+                                                        <div class="app-icon">
+                                                            <img src="assets/images/app/slack.png" width="30" alt="">
+                                                        </div>
+                                                        <div class="app-name">
+                                                            <p class="mb-0 mt-1">Slack</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+
+                            <li class="nav-item dropdown dropdown-large">
+                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative" href="#" data-bs-toggle="dropdown"><span class="alert-count">7</span>
+                                    <i class='bx bx-bell'></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a href="javascript:;">
+                                        <div class="msg-header">
+                                            <p class="msg-header-title">Notifications</p>
+                                            <p class="msg-header-badge">8 New</p>
+                                        </div>
+                                    </a>
+                                    <div class="header-notifications-list">
+                                        <!-- Notifications here -->
+                                    </div>
+                                    <a href="javascript:;">
+                                        <div class="text-center msg-footer">
+                                            <button class="btn btn-primary w-100">View All Notifications</button>
+                                        </div>
+                                    </a>
+                                </div>
+                            </li>
+
+                            <li class="nav-item dropdown dropdown-large">
+                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"> <span class="alert-count">8</span>
+                                    <i class='bx bx-shopping-bag'></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a href="javascript:;">
+                                        <div class="msg-header">
+                                            <p class="msg-header-title">Messages</p>
+                                            <p class="msg-header-badge">9 New</p>
+                                        </div>
+                                    </a>
+                                    <div class="header-message-list">
+                                        <!-- Messages here -->
+                                    </div>
+                                    <a href="javascript:;">
+                                        <div class="text-center msg-footer">
+                                            <button class="btn btn-primary w-100">View All Messages</button>
+                                        </div>
+                                    </a>
+                                </div>
+                            </li>
+                            
+                            <li class="nav-item dark-mode d-none d-sm-flex">
+                                <a class="nav-link dark-mode-icon" href="javascript:;"><i class='bx bx-moon'></i></a>
+                            </li>
+
+                            <li class="nav-item dropdown dropdown-user-profile">
+                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="javascript:;" data-bs-toggle="dropdown">
+                                    <div class="d-flex user-box align-items-center">
+                                        <div class="user-info">
+                                            <p class="user-name mb-0">{{ user_name|default('Admin User') }}</p>
+                                            <p class="designattion mb-0">{{ user_email|default('admin@tierphysio.de') }}</p>
+                                        </div>
+                                        <img src="assets/images/avatars/avatar-1.png" class="user-img" alt="user avatar">
+                                    </div>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-user fs-5"></i><span>Profile</span></a>
+                                    <a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-cog fs-5"></i><span>Settings</span></a>
+                                    <a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-home-circle fs-5"></i><span>Dashboard</span></a>
+                                    <a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-dollar-circle fs-5"></i><span>Earnings</span></a>
+                                    <a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-download fs-5"></i><span>Downloads</span></a>
+                                    <div class="dropdown-divider mb-0"></div>
+                                    <a class="dropdown-item d-flex align-items-center" href="logout.php"><i class="bx bx-log-out-circle"></i><span>Logout</span></a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <!--end header -->
+        
+        <!--start page wrapper -->
+        <div class="page-wrapper">
+            <div class="page-content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        <!--end page wrapper -->
+        
+        <!--start overlay-->
+        <div class="overlay toggle-icon"></div>
+        <!--end overlay-->
+        
+        <!--Start Back To Top Button-->
+        <a href="javaScript:;" class="back-to-top"><i class='bx bxs-up-arrow-alt'></i></a>
+        <!--End Back To Top Button-->
+        
+        <footer class="page-footer">
+            <p class="mb-0">Copyright © 2024. All right reserved. Developed with ❤️ by <a href="mailto:florian0engelhardt@gmail.com" class="text-decoration-none text-purple-400">Florian Engelhardt</a></p>
+        </footer>
+    </div>
+    <!--end wrapper-->
+    
+    <!-- Search Modal -->
+    <div class="modal fade" id="SearchModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-md-down">
+            <div class="modal-content">
+                <div class="modal-header gap-2">
+                    <div class="position-relative popup-search w-100">
+                        <input class="form-control form-control-lg ps-5 border border-3 border-primary" type="search" placeholder="Search" id="globalSearch">
+                        <span class="position-absolute top-50 search-show ms-3 translate-middle-y start-0 top-50 fs-4"><i class='bx bx-search'></i></span>
+                    </div>
+                    <button type="button" class="btn-close d-md-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="search-list" id="searchResults">
+                        <!-- Search results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Search Modal -->
+    
+    <!-- Include New Owner Patient Modal -->
+    {% include "new_owner_patient_modal.twig" %}
+    
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/plugins/simplebar/js/simplebar.min.js"></script>
+    <script src="assets/plugins/metismenu/js/metisMenu.min.js"></script>
+    <script src="assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js"></script>
+    <script src="assets/plugins/datatable/js/jquery.dataTables.min.js"></script>
+    <script src="assets/plugins/datatable/js/dataTables.bootstrap5.min.js"></script>
+    <script src="assets/plugins/notifications/js/lobibox.min.js"></script>
+    <script src="assets/plugins/chartjs/js/Chart.min.js"></script>
+    <script src="assets/js/app.js"></script>
+    
+    <!-- Global Search Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('globalSearch');
+        const searchResults = document.getElementById('searchResults');
+        let searchTimeout;
+        let selectedIndex = -1;
+
+        function doSearch(query) {
+            if (query.length < 2) {
+                searchResults.innerHTML = '<div class="text-muted p-3">Mindestens 2 Zeichen eingeben...</div>';
+                return;
+            }
+
+            searchResults.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm"></span> Suche läuft...</div>';
+
+            fetch('api/search.php?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        let html = '';
+                        data.results.forEach((result, index) => {
+                            html += `
+                                <div class="list-group-item search-result-item" data-index="${index}" data-type="${result.type}" data-id="${result.id}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="search-icon me-3">
+                                            ${result.icon || '<i class="bx bx-search"></i>'}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">${result.title}</h6>
+                                            <p class="mb-0 text-muted small">${result.subtitle || ''}</p>
+                                        </div>
+                                        <small class="text-muted">${result.type}</small>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        searchResults.innerHTML = '<div class="list-group">' + html + '</div>';
+                        
+                        // Add click handlers
+                        document.querySelectorAll('.search-result-item').forEach(item => {
+                            item.addEventListener('click', function() {
+                                const type = this.dataset.type;
+                                const id = this.dataset.id;
+                                handleSearchItemClick(type, id);
+                            });
+                        });
+                    } else {
+                        searchResults.innerHTML = '<div class="text-muted p-3">Keine Ergebnisse gefunden</div>';
+                    }
+                })
+                .catch(error => {
+                    searchResults.innerHTML = '<div class="text-danger p-3">Fehler bei der Suche</div>';
+                });
+        }
+
+        function handleSearchItemClick(type, id) {
+            // Navigate based on type
+            switch(type.toLowerCase()) {
+                case 'patient':
+                    window.location.href = 'patient.php?id=' + id;
+                    break;
+                case 'owner':
+                case 'besitzer':
+                    window.location.href = 'owner.php?id=' + id;
+                    break;
+                case 'appointment':
+                case 'termin':
+                    window.location.href = 'appointments.php?id=' + id;
+                    break;
+                case 'invoice':
+                case 'rechnung':
+                    window.location.href = 'invoices.php?id=' + id;
+                    break;
+                default:
+                    console.log('Unknown type:', type);
+            }
+        }
+
+        // Debounced search
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    doSearch(e.target.value);
+                }, 300);
+            });
+
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                const items = document.querySelectorAll('.search-result-item');
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelection(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, 0);
+                    updateSelection(items);
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    if (items[selectedIndex]) {
+                        items[selectedIndex].click();
+                    }
+                }
+            });
+        }
+
+        function updateSelection(items) {
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
+                }
+            });
         }
     });
+    </script>
+    
+    <!-- Theme Toggle Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const darkModeIcon = document.querySelector('.dark-mode-icon');
+        if (darkModeIcon) {
+            darkModeIcon.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('tierphysio-theme', isDark ? 'dark' : 'light');
+                
+                // Update icon
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.className = isDark ? 'bx bx-sun' : 'bx bx-moon';
+                }
+            });
 
-    // Menü-Klick reparieren (falls Header blockiert war)
-    const burger = document.querySelector('.menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    if (burger && sidebar) {
-        burger.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
-    }
-
-    // Modal-Fix (Z-Index)
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.style.zIndex = '1050';
+            // Load saved theme
+            const savedTheme = localStorage.getItem('tierphysio-theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                const icon = darkModeIcon.querySelector('i');
+                if (icon) {
+                    icon.className = 'bx bx-sun';
+                }
+            }
+        }
     });
-});
-</script>
-{% endblock %}
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
