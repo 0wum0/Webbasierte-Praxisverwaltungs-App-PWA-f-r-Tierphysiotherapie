@@ -43,6 +43,11 @@ $treatmentStats = [];
 $topPatients = [];
 $birthdaysThisMonth = [];
 $overdueInvoices = [];
+$appointmentsToday = [];
+$birthdayOwners = [];
+$birthdayPatients = [];
+$birthdaySuccess = '';
+$totalExpenses = 0;
 
 // Get database connection
 $db = db();
@@ -73,7 +78,10 @@ if ($db) {
                 COALESCE(SUM(CASE WHEN DATE_FORMAT(i.invoice_date, '%Y-%m') = ? AND i.status = 'paid' THEN i.total_amount END), 0) as income_month,
                 COALESCE(SUM(CASE WHEN DATE_FORMAT(i.invoice_date, '%Y') = ? AND i.status = 'paid' THEN i.total_amount END), 0) as income_year,
                 COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.total_amount END), 0) as total_income,
-                COUNT(DISTINCT CASE WHEN i.status = 'open' THEN i.id END) as open_invoices
+                COUNT(DISTINCT CASE WHEN i.status = 'open' THEN i.id END) as open_invoices,
+                COUNT(DISTINCT CASE WHEN i.status = 'paid' THEN i.id END) as paid_invoices,
+                COUNT(DISTINCT CASE WHEN i.status = 'open' AND i.due_date < CURDATE() THEN i.id END) as overdue_invoices,
+                COALESCE(SUM(CASE WHEN DATE(i.invoice_date) = CURDATE() AND i.status = 'paid' THEN i.total_amount END), 0) as income_today
             FROM appointments a
             LEFT JOIN invoices i ON 1=1
         ");
@@ -268,6 +276,67 @@ if ($db) {
         $stmt->execute();
         $overdueInvoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        // Today's appointments with details
+        $stmt = $db->prepare("
+            SELECT 
+                a.*,
+                p.name as patient_name,
+                p.id as patient_id,
+                o.firstname,
+                o.lastname
+            FROM appointments a
+            LEFT JOIN patients p ON a.patient_id = p.id
+            LEFT JOIN owners o ON p.owner_id = o.id
+            WHERE DATE(a.appointment_date) = CURDATE()
+            ORDER BY a.appointment_date ASC
+        ");
+        $stmt->execute();
+        $appointmentsToday = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Today's birthdays - Owners
+        $stmt = $db->prepare("
+            SELECT 
+                o.id,
+                o.firstname,
+                o.lastname,
+                o.email,
+                o.birthdate
+            FROM owners o
+            WHERE DATE_FORMAT(o.birthdate, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
+        ");
+        $stmt->execute();
+        $birthdayOwners = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Today's birthdays - Patients
+        $stmt = $db->prepare("
+            SELECT 
+                p.id,
+                p.name,
+                p.birthdate,
+                o.firstname,
+                o.lastname,
+                o.email
+            FROM patients p
+            LEFT JOIN owners o ON p.owner_id = o.id
+            WHERE DATE_FORMAT(p.birthdate, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
+        ");
+        $stmt->execute();
+        $birthdayPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Calculate total expenses (open invoices total)
+        $stmt = $db->prepare("
+            SELECT COALESCE(SUM(total_amount), 0) as total
+            FROM invoices
+            WHERE status = 'open'
+        ");
+        $stmt->execute();
+        $totalExpenses = $stmt->fetchColumn();
+        
+        // Check for birthday success message
+        if (isset($_GET['birthday_success'])) {
+            $birthdaySuccess = 'Geburtstagsgrüße wurden erfolgreich versendet!';
+        }
+        
     } catch (Exception $e) {
         error_log("Dashboard error: " . $e->getMessage());
     }
@@ -300,6 +369,10 @@ echo $twig->render('dashboard.twig', [
     'treatmentsWeek' => $stats['treatments_week'],
     'todayAppointments' => $todayStats['today_appointments'],
     
+    // Additional stats for template
+    'stats' => $stats,
+    'todayStats' => $todayStats,
+    
     // Lists and charts
     'upcomingAppointments' => $upcomingAppointments,
     'recentActivities' => $recentActivities,
@@ -309,4 +382,9 @@ echo $twig->render('dashboard.twig', [
     'topPatients' => $topPatients,
     'birthdaysThisMonth' => $birthdaysThisMonth,
     'overdueInvoices' => $overdueInvoices,
+    'appointmentsToday' => $appointmentsToday,
+    'birthdayOwners' => $birthdayOwners,
+    'birthdayPatients' => $birthdayPatients,
+    'birthdaySuccess' => $birthdaySuccess,
+    'totalExpenses' => $totalExpenses,
 ]);
