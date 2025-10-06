@@ -1,40 +1,66 @@
-# 🧠 Tierphysio Manager – Auto-Integrity + Auto-Fix System
-# by Florian Engelhardt © 2025
+# 🧩 Tierphysio Manager – AutoFix Integration mit IntegrityCheck
+# Erstellt für https://ew.makeit.uno von Florian Engelhardt ©2025
 
 defaults:
-  run_on_every_prompt: true   # 🔥 Führt Check + Fix bei jedem Cursor-Prompt automatisch aus
+  run_on_every_prompt: true
 
 tasks:
-
-  - name: "Integrity Auto-Check"
-    trigger: ["beforeCommit", "beforePrompt"]
+  - name: "Tierphysio Auto-Integrity"
+    trigger: ["beforePrompt", "beforeCommit"]
     action:
       run: |
-        echo "🔍 Starte automatische Integritätsprüfung über https://ew.makeit.uno/integrity.php ..."
-        RESPONSE=$(curl -s https://ew.makeit.uno/integrity.php)
+        echo "🔍 Prüfe https://ew.makeit.uno/integrity.php ..."
+        REPORT=$(curl -s https://ew.makeit.uno/integrity.php)
 
-        if echo "$RESPONSE" | grep -E '❌|⚠️' >/dev/null; then
-          echo "⚠️ Probleme erkannt – Auto-Fix wird ausgeführt ..."
-          
-          # 1️⃣ Fehlende {% endblock %} in .twig-Dateien automatisch korrigieren
-          find templates -type f -name "*.twig" | while read file; do
-            if ! grep -q "{% endblock %}" "$file"; then
-              echo "{% endblock %}" >> "$file"
-              echo "🛠️ endblock hinzugefügt: $file"
+        echo "$REPORT" | grep "⚠️" && echo "⚠️ Warnungen erkannt – Starte Auto-Fix..." || echo "✅ Keine Probleme erkannt."
+
+        # --- 1. Fehlende base.twig Erweiterung hinzufügen ---
+        echo "$REPORT" | grep "erweitert keine base.twig" | awk '{print $3}' | while read FILE; do
+          if [ -f "$FILE" ]; then
+            if ! grep -q "{% extends 'base.twig' %}" "$FILE"; then
+              sed -i '1i {% extends "base.twig" %}' "$FILE"
+              echo "🛠️ base.twig-Erweiterung hinzugefügt: $FILE"
             fi
-          done
-          
-          # 2️⃣ base.twig-Erweiterung sicherstellen
-          find templates -type f -name "*.twig" | while read file; do
-            if ! grep -q "{% extends 'base.twig' %}" "$file" && [[ "$file" != *"base.twig"* ]]; then
-              sed -i '1i {% extends "base.twig" %}' "$file"
-              echo "🛠️ base.twig-Erweiterung ergänzt: $file"
+          fi
+        done
+
+        # --- 2. Fehlende endblock am Ende ergänzen ---
+        echo "$REPORT" | grep "kein endblock" | awk '{print $3}' | while read FILE; do
+          if [ -f "$FILE" ]; then
+            if ! grep -q "{% endblock %}" "$FILE"; then
+              echo "{% endblock %}" >> "$FILE"
+              echo "🛠️ endblock ergänzt: $FILE"
             fi
-          done
-          
-          # 3️⃣ Header- und Modal-Fixes
-          if [ -f includes/layout/header.php ]; then
-            grep -q "topbar" includes/layout/header.php || \
+          fi
+        done
+
+        # --- 3. Header Topbar prüfen & ggf. ergänzen ---
+        HEADER="includes/layout/header.php"
+        if [ -f "$HEADER" ]; then
+          if ! grep -q "topbar" "$HEADER"; then
+            sed -i '2i <!-- AutoFix: Topbar ergänzt -->\n<div class="topbar"></div>' "$HEADER"
+            echo "🛠️ Topbar ergänzt in header.php"
+          fi
+        fi
+
+        # --- 4. Modals mit fehlendem z-index reparieren ---
+        echo "$REPORT" | grep "Modal ohne z-index" | awk '{print $2}' | while read PHPFILE; do
+          if [ -f "$PHPFILE" ]; then
+            sed -i 's/<div class="modal"/<div class="modal" style="z-index:1050"/g' "$PHPFILE"
+            echo "🛠️ Modal z-index korrigiert in: $PHPFILE"
+          fi
+        done
+
+        # --- 5. Footer Fix: position fixed → relative ---
+        CSS="public/css/main.css"
+        if [ -f "$CSS" ]; then
+          if grep -q "position: fixed" "$CSS"; then
+            sed -i 's/position: fixed/position: relative/g' "$CSS"
+            echo "🛠️ Footerposition korrigiert (relative)."
+          fi
+        fi
+
+        echo "✅ Auto-Fix abgeschlossen. Integritätsprüfung kann erneut gestartet werden."            grep -q "topbar" includes/layout/header.php || \
               sed -i '2i <!-- 🧩 Auto-Fix: Topbar hinzugefügt -->\n<div class="topbar"></div>' includes/layout/header.php
             echo "🛠️ Header geprüft und ggf. korrigiert."
           fi
