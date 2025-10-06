@@ -1,0 +1,237 @@
+{% extends 'layout.twig' %}
+
+{% block content %}
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+    <div class="ps-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 p-0">
+                <li class="breadcrumb-item"><a href="dashboard.php"><i class="bx bx-home-alt"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Termine</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="ms-auto">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAppointmentModal">
+            <i class="bx bx-plus"></i> Termin anlegen
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="card-title mb-0">Terminverwaltung</h5>
+                    <span class="badge bg-primary">{{ appointments|length }} Termine</span>
+                </div>
+                
+                {% if errorMessage %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bx bx-error-circle me-2"></i>{{ errorMessage }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endif %}
+                
+                {% if appointments|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Datum/Zeit</th>
+                                    <th>Patient</th>
+                                    <th>Besitzer</th>
+                                    <th>Notiz</th>
+                                    <th width="180">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-3">
+                                                <span class="avatar-title bg-light text-primary rounded-circle">
+                                                    <i class="bx bx-calendar"></i>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <strong>{{ appointment.appointment_date|date('d.m.Y') }}</strong>
+                                                <div class="text-muted small">
+                                                    {{ appointment.appointment_date|date('H:i') }} Uhr
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ appointment.patient_name }}</td>
+                                    <td>{{ appointment.owner_name }}</td>
+                                    <td>
+                                        {% if appointment.notes %}
+                                            <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ appointment.notes }}">
+                                                {{ appointment.notes }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-primary" title="Details anzeigen">
+                                                <i class="bx bx-show"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning" title="Bearbeiten">
+                                                <i class="bx bx-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" title="Löschen">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bx bx-calendar-x display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">Keine Termine vorhanden</h5>
+                        <p class="text-muted">Legen Sie den ersten Termin an, um zu beginnen.</p>
+                        <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAppointmentModal">
+                            <i class="bx bx-plus"></i> Ersten Termin anlegen
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Appointment Modal -->
+<div class="modal fade" id="addAppointmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="appointments.php">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="action" value="create">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">Termin anlegen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="patient_id" class="form-label">Patient *</label>
+                            <select class="form-select" id="patient_id" name="patient_id" required>
+                                <option value="">Bitte wählen...</option>
+                                {% for patient in patients %}
+                                    <option value="{{ patient.id }}">
+                                        {{ patient.name }} (Besitzer: {{ patient.owner_name }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="appointment_date" class="form-label">Datum *</label>
+                            <input type="date" class="form-control" id="appointment_date" name="appointment_date" required>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="appointment_time" class="form-label">Uhrzeit *</label>
+                            <input type="time" class="form-control" id="appointment_time" name="appointment_time" required>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="notes" class="form-label">Notizen</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Optionale Notizen zum Termin..."></textarea>
+                        </div>
+                    </div>
+                    
+                    {% if patients|length == 0 %}
+                        <div class="alert alert-warning mt-3">
+                            <i class="bx bx-info-circle me-2"></i>
+                            Es sind keine Patienten vorhanden. Bitte legen Sie zuerst einen Patienten an.
+                            <div class="mt-2">
+                                <a href="patients.php" class="btn btn-sm btn-warning">Zu Patienten</a>
+                                <a href="owner_patient.php" class="btn btn-sm btn-primary">Kombinierte Erfassung</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary" {% if patients|length == 0 %}disabled{% endif %}>
+                        Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: var(--bs-box-shadow-sm);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.table {
+    color: var(--color-text);
+}
+
+.table-light {
+    background: var(--color-bg-secondary);
+}
+
+.avatar-title {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #6A4CAE, #A898C7);
+}
+
+.modal-content {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.form-control, .form-select {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--color-bg);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(123, 91, 190, 0.25);
+}
+</style>
+
+<script>
+// Set today's date as default
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('appointment_date');
+    if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+});
+</script>
+{% endblock %}
