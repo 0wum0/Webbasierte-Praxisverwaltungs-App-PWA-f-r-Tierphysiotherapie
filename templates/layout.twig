@@ -22,7 +22,7 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <!-- Main Theme CSS -->
-    <link href="assets/css/main.css" rel="stylesheet">
+    <link href="public/css/main.css" rel="stylesheet">
     
     <!-- Essential Plugins -->
     <link href="assets/plugins/simplebar/css/simplebar.css" rel="stylesheet" />
@@ -43,8 +43,8 @@
         })();
     </script>
     
-    <!-- Theme Manager Script -->
-    <script src="assets/js/theme.js"></script>
+    <!-- Theme Manager Scripts -->
+    <script src="public/js/theme.js"></script>
     
     <title>{{ title|default("Tierphysio Manager 🐾") }}</title>
     
@@ -241,10 +241,10 @@
     <div class="wrapper">
         
         <!-- Include Navigation Sidebar -->
-        {% include '../includes/nav.php' %}
+        {% include '../includes/layout/nav.php' %}
         
         <!-- Include Header -->
-        {% include '../includes/header.php' %}
+        {% include '../includes/layout/header.php' %}
         
         <!-- Page Wrapper -->
         <div class="page-wrapper">
@@ -260,7 +260,7 @@
     <!-- End Wrapper -->
     
     <!-- Footer (Scrollable) -->
-    {% include '../includes/footer.php' %}
+    {% include '../includes/layout/footer.php' %}
     
     <!-- Back to top button is included in footer.php -->
     
@@ -278,7 +278,7 @@
     <script src="assets/plugins/notifications/js/notifications.min.js"></script>
     
     <!-- App JS -->
-    <script src="assets/js/app.js"></script>
+    <script src="public/js/app.js"></script>
     
     <script>
         // Initialize DataTables with violet theme

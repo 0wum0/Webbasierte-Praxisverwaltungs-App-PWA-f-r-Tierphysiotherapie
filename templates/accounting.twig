@@ -1,0 +1,384 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="bx bx-calculator text-primary"></i> Buchhaltung
+            </h1>
+            <p class="text-muted">Finanzübersicht und Verwaltung</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="bx bx-printer"></i> Drucken
+                </button>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+                    <i class="bx bx-export"></i> Exportieren
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon primary">
+                        <i class="bx bx-euro"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Monatsumsatz</h6>
+                        <h3 class="mb-0">€ {{ monthlyIncome|number_format(2, ',', '.') }}</h3>
+                        <small class="text-muted">{{ filterMonth|date('F') }} {{ filterYear }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon success">
+                        <i class="bx bx-calendar"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Jahresumsatz</h6>
+                        <h3 class="mb-0">€ {{ yearlyIncome|number_format(2, ',', '.') }}</h3>
+                        <small class="text-muted">{{ filterYear }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon warning">
+                        <i class="bx bx-time-five"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Ausstehend</h6>
+                        <h3 class="mb-0 text-warning">€ {{ outstandingAmount|number_format(2, ',', '.') }}</h3>
+                        <small class="text-muted">Offene Rechnungen</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon info">
+                        <i class="bx bx-trending-up"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Gesamtumsatz</h6>
+                        <h3 class="mb-0">€ {{ totalIncome|number_format(2, ',', '.') }}</h3>
+                        <small class="text-muted">Alle Zeit</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <!-- Revenue Chart -->
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">📊 Umsatzentwicklung (Letzte 12 Monate)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tax Summary -->
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">💰 Steuerübersicht</h5>
+            </div>
+            <div class="card-body">
+                <div class="tax-summary">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Bruttoumsatz:</span>
+                            <strong>€ {{ monthlyIncome|number_format(2, ',', '.') }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Nettoumsatz:</span>
+                            <strong>€ {{ netIncome|number_format(2, ',', '.') }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">MwSt. ({{ vatRate }}%):</span>
+                            <strong>€ {{ vatAmount|number_format(2, ',', '.') }}</strong>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="alert alert-info">
+                        <i class="bx bx-info-circle"></i>
+                        <small>Steuerberechnung basiert auf {{ vatRate }}% MwSt.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="accounting.php" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Monat</label>
+                <select name="month" class="form-select">
+                    {% for i in 1..12 %}
+                        <option value="{{ i }}" {% if i == filterMonth %}selected{% endif %}>
+                            {{ i|date('F') }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Jahr</label>
+                <select name="year" class="form-select">
+                    {% for year in (currentYear - 3)..(currentYear + 1) %}
+                        <option value="{{ year }}" {% if year == filterYear %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="all" {% if filterStatus == 'all' %}selected{% endif %}>Alle</option>
+                    <option value="open" {% if filterStatus == 'open' %}selected{% endif %}>Offen</option>
+                    <option value="paid" {% if filterStatus == 'paid' %}selected{% endif %}>Bezahlt</option>
+                    <option value="partially_paid" {% if filterStatus == 'partially_paid' %}selected{% endif %}>Teilweise bezahlt</option>
+                    <option value="overdue" {% if filterStatus == 'overdue' %}selected{% endif %}>Überfällig</option>
+                    <option value="cancelled" {% if filterStatus == 'cancelled' %}selected{% endif %}>Storniert</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bx bx-filter-alt"></i> Filtern
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">📋 Transaktionen</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover datatable">
+                <thead>
+                    <tr>
+                        <th>Rechnungsnr.</th>
+                        <th>Datum</th>
+                        <th>Patient</th>
+                        <th>Besitzer</th>
+                        <th>Betrag</th>
+                        <th>Status</th>
+                        <th>Fälligkeit</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>
+                            <a href="invoice_pdf.php?id={{ transaction.id }}" class="text-primary">
+                                #{{ transaction.invoice_number }}
+                            </a>
+                        </td>
+                        <td>{{ transaction.created_at|date('d.m.Y') }}</td>
+                        <td>{{ transaction.patient_name|default('-') }}</td>
+                        <td>{{ transaction.firstname }} {{ transaction.lastname }}</td>
+                        <td class="fw-bold">€ {{ transaction.amount|number_format(2, ',', '.') }}</td>
+                        <td>
+                            {% if transaction.status == 'paid' %}
+                                <span class="badge bg-success">Bezahlt</span>
+                            {% elseif transaction.status == 'open' %}
+                                <span class="badge bg-warning">Offen</span>
+                            {% elseif transaction.status == 'overdue' %}
+                                <span class="badge bg-danger">Überfällig</span>
+                            {% elseif transaction.status == 'partially_paid' %}
+                                <span class="badge bg-info">Teilweise bezahlt</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ transaction.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if transaction.due_date %}
+                                {{ transaction.due_date|date('d.m.Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="invoice_pdf.php?id={{ transaction.id }}" class="btn btn-outline-primary" title="Ansehen">
+                                    <i class="bx bx-show"></i>
+                                </a>
+                                <a href="edit_invoice.php?id={{ transaction.id }}" class="btn btn-outline-warning" title="Bearbeiten">
+                                    <i class="bx bx-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            Keine Transaktionen gefunden
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Daten exportieren</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Wählen Sie das Exportformat:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportData('csv')">
+                        <i class="bx bx-file"></i> CSV Export
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="exportData('pdf')">
+                        <i class="bx bxs-file-pdf"></i> PDF Export
+                    </button>
+                    <button class="btn btn-outline-success" onclick="exportData('excel')">
+                        <i class="bx bxs-file-export"></i> Excel Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(124, 77, 255, 0.15);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.primary { background: linear-gradient(135deg, #7C4DFF, #9C27B0); }
+.stat-icon.success { background: linear-gradient(135deg, #10b981, #34d399); }
+.stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.stat-icon.info { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+
+.chart-container {
+    position: relative;
+    height: 300px !important;
+}
+
+.tax-summary {
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Revenue Chart
+const ctx = document.getElementById('revenueChart');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for item in chartData %}'{{ item.month }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Umsatz',
+                data: [{% for item in chartData %}{{ item.amount }}{% if not loop.last %},{% endif %}{% endfor %}],
+                borderColor: '#7C4DFF',
+                backgroundColor: 'rgba(124, 77, 255, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '€' + value.toLocaleString('de-DE');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Export functions
+function exportData(format) {
+    const params = new URLSearchParams({
+        format: format,
+        month: {{ filterMonth }},
+        year: {{ filterYear }},
+        status: '{{ filterStatus }}'
+    });
+    
+    window.location.href = 'api/export_accounting.php?' + params.toString();
+}
+</script>
+{% endblock %}
