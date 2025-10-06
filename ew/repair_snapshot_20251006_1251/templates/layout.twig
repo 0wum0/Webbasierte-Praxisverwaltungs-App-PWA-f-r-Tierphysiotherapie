@@ -1,0 +1,38 @@
+{% extends "base.twig" %}
+
+{% block title %}{{ title|default("Tierphysio Manager 🐾") }}{% endblock %}
+
+{% block content %}
+    {% block inner_content %}
+    <!-- Seiteninhalt hier -->
+    {% endblock %}
+{% endblock %}
+
+{% block scripts %}
+{{ parent() }}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Navigation aktiv markieren
+    const currentPath = window.location.pathname.split('/').pop();
+    document.querySelectorAll('.nav-item a').forEach(link => {
+        if (link.getAttribute('href') && link.getAttribute('href').includes(currentPath)) {
+            link.classList.add('active');
+        }
+    });
+
+    // Menü-Klick reparieren (falls Header blockiert war)
+    const burger = document.querySelector('.menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    if (burger && sidebar) {
+        burger.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+    }
+
+    // Modal-Fix (Z-Index)
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.zIndex = '1050';
+    });
+});
+</script>
+{% endblock %}

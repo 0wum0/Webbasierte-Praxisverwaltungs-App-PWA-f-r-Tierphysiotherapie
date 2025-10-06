@@ -1,0 +1,102 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2>{% if patient %}✏️ Patient bearbeiten{% else %}➕ Neuen Patienten anlegen{% endif %}</h2>
+
+    {% if errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for e in errors %}
+                <li>{{ e }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if success %}
+        <div class="alert alert-success">✅ Änderungen gespeichert.</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="bg-dark p-3 rounded shadow">
+        {{ csrf_field()|raw }}
+
+        <div class="mb-3">
+            <label class="form-label">Besitzer *</label>
+            <select name="owner_id" class="form-select" required>
+                <option value="">-- Besitzer auswählen --</option>
+                {% for o in owners %}
+                    <option value="{{ o.id }}" {% if patient and patient.owner_id == o.id %}selected{% endif %}>
+                        {{ o.firstname }} {{ o.lastname }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Name *</label>
+            <input type="text" name="name" class="form-control" value="{{ patient.name|default('') }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Tierart</label>
+            <input type="text" name="species" class="form-control" value="{{ patient.species|default('') }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rasse</label>
+            <input type="text" name="breed" class="form-control" value="{{ patient.breed|default('') }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Geburtsdatum</label>
+            <input type="date" name="birthdate" class="form-control" value="{{ patient.birthdate|default('') }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Befund</label>
+            <textarea name="findings" class="form-control" rows="3">{{ patient.findings|default('') }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Medikamente</label>
+            <textarea name="medications" class="form-control" rows="3">{{ patient.medications|default('') }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Therapien</label>
+            <textarea name="therapies" class="form-control" rows="3">{{ patient.therapies|default('') }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Symptome / Anamnese</label>
+            <textarea name="symptoms" class="form-control" rows="3">{{ patient.symptoms|default('') }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Zusatzleistungen</label>
+            <textarea name="extras" class="form-control" rows="2">{{ patient.extras|default('') }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Allgemeine Notizen</label>
+            <textarea name="notes" class="form-control" rows="3">{{ patient.notes|default('') }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Bild</label>
+            {% if patient.image %}
+                <div class="mb-2">
+                    <img src="{{ patient.image }}" alt="Bild von {{ patient.name }}" class="rounded shadow" style="max-height:120px;">
+                </div>
+            {% endif %}
+            <input type="file" name="image" class="form-control">
+        </div>
+
+        <button type="submit" class="btn btn-success">💾 Speichern</button>
+        <a href="patients.php" class="btn btn-outline-light">↩️ Zurück</a>
+    </form>
+
+</div>
+{% endblock %}

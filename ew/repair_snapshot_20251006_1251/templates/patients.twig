@@ -1,0 +1,322 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+  <div class="breadcrumb-title pe-3">🐾 Patientenverwaltung</div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="patientsTable" class="table table-striped table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Bild</th>
+            <th>Name</th>
+            <th>Tierart</th>
+            <th>Rasse</th>
+            <th>Besitzer</th>
+            <th>Geburtsdatum</th>
+            <th style="width:180px">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in patients %}
+          <tr>
+            <td>{{ p.id }}</td>
+            <td>
+              {% if p.image %}
+                <img src="{{ p.image }}" alt="{{ p.name }}" class="rounded-circle shadow" style="height:40px;width:40px;object-fit:cover;">
+              {% else %}
+                <span class="badge bg-secondary">Kein Bild</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ p.name }}</strong></td>
+            <td>{{ p.species }}</td>
+            <td>{{ p.breed }}</td>
+            <td>{{ p.firstname }} {{ p.lastname }}</td>
+            <td>
+              {% if p.birthdate %}
+                <span class="badge badge-glass badge-paid">
+                  {{ p.birthdate|date("d.m.Y") }} – {{ (date().diff(date(p.birthdate))).y }} J.
+                </span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary view-patient-btn glow-btn" data-patient="{{ p.id }}">
+                🔍 Details
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center text-muted">Keine Patienten gefunden</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# ---------------- Patient Modal ---------------- #}
+<div class="modal fade" id="patientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content owner-modal">
+      <div class="modal-header owner-header d-flex justify-content-between align-items-center">
+        <h5 class="modal-title owner-title d-flex align-items-center gap-2">
+          <span class="owner-avatar" id="patientAvatar">🐾</span>
+          <span id="patientName">Patient</span>
+        </h5>
+        <div class="owner-actions">
+          <button class="btn btn-sm btn-warning edit-patient-btn glow-btn">✏️ Bearbeiten</button>
+          <button class="btn btn-sm btn-danger delete-patient-btn glow-btn">🗑️ Löschen</button>
+          <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+
+      <div class="modal-body owner-body">
+        <!-- Patientinfo -->
+        <div id="patientInfo" class="glass-slab mb-3">
+          <p class="text-muted">⏳ Lade Patientendaten...</p>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs owner-tabs mt-3" role="tablist">
+          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-treatments">💊 Behandlungen</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-invoices">💰 Rechnungen</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-notes">📝 Notizen</a></li>
+        </ul>
+
+        <div class="tab-content p-3">
+          <!-- Behandlungen -->
+          <div class="tab-pane fade show active" id="tab-treatments">
+            <form class="add-treatment-form glass-slab mb-3">
+              <div class="input-group">
+                <input type="text" name="notes" class="form-control glass-input" placeholder="Neue Behandlung / Notizen" required>
+                <button type="submit" class="btn btn-success glow-btn">➕ Speichern</button>
+              </div>
+            </form>
+            <ul class="list-group fancy-list" id="treatmentsList"></ul>
+          </div>
+
+          <!-- Rechnungen -->
+          <div class="tab-pane fade" id="tab-invoices">
+            <form class="add-invoice-form glass-slab mb-3">
+              <div class="input-group">
+                <input type="number" step="0.01" name="amount" class="form-control glass-input" placeholder="Betrag (€)" required>
+                <button type="submit" class="btn btn-success glow-btn">➕ Rechnung</button>
+              </div>
+            </form>
+            <ul class="list-group fancy-list" id="invoicesList"></ul>
+          </div>
+
+          <!-- Notizen -->
+          <div class="tab-pane fade" id="tab-notes">
+            <form class="add-note-form mb-3 glass-slab">
+              <textarea name="content" class="form-control glass-input mb-2" rows="2" placeholder="Notiz eingeben…" required></textarea>
+              <button type="submit" class="btn btn-success glow-btn">💾 Speichern</button>
+            </form>
+            <ul class="list-group fancy-list" id="notesList"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer owner-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Schließen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==== JS ==== -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  if (window.jQuery && $.fn.DataTable) {
+    $('#patientsTable').DataTable({
+      pageLength: 10,
+      order: [[2, 'asc']],
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/de-DE.json' }
+    });
+  }
+
+  const API_URL = 'api/patients_api.php';
+  let currentPatientId = null;
+
+  async function apiPost(payload) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  // ===== Render =====
+  function renderTreatments(list) {
+    const ul = document.getElementById('treatmentsList');
+    ul.innerHTML = "";
+    if (!list.length) { ul.innerHTML = "<li class='list-group-item text-muted'>Keine Behandlungen</li>"; return; }
+    list.forEach(a => {
+      const li = document.createElement('li');
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>🗓️ <span class="badge badge-glass badge-paid">${a.appointment_display}</span> – ${a.notes ?? "-"}</span>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-warning edit-treatment-btn glow-btn" data-id="${a.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-treatment-btn glow-btn" data-id="${a.id}">🗑️</button>
+        </div>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderInvoices(list) {
+    const ul = document.getElementById('invoicesList');
+    ul.innerHTML = "";
+    if (!list.length) { ul.innerHTML = "<li class='list-group-item text-muted'>Keine Rechnungen</li>"; return; }
+    list.forEach(inv => {
+      const li = document.createElement('li');
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>#${inv.id} – ${inv.amount} € 
+          <span class="badge badge-glass badge-paid">${inv.created_display}</span>
+        </span>
+        <button class="btn btn-sm btn-warning glow-btn toggle-invoice-btn" data-id="${inv.id}" data-status="${inv.status}">
+          ${inv.status === 'paid' ? '↩️ Offen' : '✅ Bezahlt'}
+        </button>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderNotes(list) {
+    const ul = document.getElementById('notesList');
+    ul.innerHTML = "";
+    if (!list.length) { ul.innerHTML = "<li class='list-group-item text-muted'>Keine Notizen</li>"; return; }
+    list.forEach(n => {
+      const li = document.createElement('li');
+      li.className = "list-group-item d-flex justify-content-between align-items-center";
+      li.innerHTML = `
+        <span>📝 ${n.content} <span class="badge badge-glass badge-paid">${n.created_display}</span></span>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-warning edit-note-btn glow-btn" data-id="${n.id}">✏️</button>
+          <button class="btn btn-sm btn-danger delete-note-btn glow-btn" data-id="${n.id}">🗑️</button>
+        </div>`;
+      ul.appendChild(li);
+    });
+  }
+
+  // ===== Patient öffnen =====
+  document.querySelectorAll('.view-patient-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      currentPatientId = this.dataset.patient;
+      const modal = new bootstrap.Modal(document.getElementById('patientModal'));
+      modal.show();
+
+      const info = document.getElementById('patientInfo');
+      info.innerHTML = "<p class='text-muted'>⏳ Lade Daten...</p>";
+
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      if (!data.success) {
+        info.innerHTML = "<p class='text-danger'>❌ Fehler: " + data.error + "</p>";
+        return;
+      }
+
+      document.getElementById('patientName').innerText = data.patient.name;
+      if (data.patient.image) {
+        document.getElementById('patientAvatar').innerHTML = `<img src="${data.patient.image}" class="rounded-circle" style="height:40px;width:40px;object-fit:cover;">`;
+      } else {
+        document.getElementById('patientAvatar').innerText = "🐾";
+      }
+
+      info.innerHTML = `
+        <div><strong>Art:</strong> ${data.patient.species} – ${data.patient.breed}</div>
+        <div><strong>Besitzer:</strong> ${data.owner.firstname} ${data.owner.lastname}</div>
+        <div><strong>Geburtsdatum:</strong> ${data.patient.birthdate ?? "-"} 
+             <span class="badge badge-glass badge-paid">${data.patient.age_years ?? "-"} J.</span></div>
+        <div><strong>Symptome:</strong> ${data.patient.symptoms ?? "-"}</div>
+      `;
+
+      renderTreatments(data.appointments);
+      renderInvoices(data.invoices);
+      renderNotes(data.notes);
+    });
+  });
+
+  // ===== Events =====
+  // Behandlung hinzufügen
+  document.querySelector('.add-treatment-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await apiPost({ action: 'add_treatment', patient_id: currentPatientId, notes: fd.get('notes') });
+    const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+    renderTreatments(data.appointments);
+    e.target.reset();
+  });
+
+  // Behandlung löschen / bearbeiten
+  document.addEventListener('click', async e => {
+    if (e.target.classList.contains('delete-treatment-btn')) {
+      await apiPost({ action: 'delete_treatment', id: e.target.dataset.id, patient_id: currentPatientId });
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      renderTreatments(data.appointments);
+    }
+    if (e.target.classList.contains('edit-treatment-btn')) {
+      const newNotes = prompt("Neue Notiz für Behandlung:");
+      if (newNotes) {
+        await apiPost({ action: 'edit_treatment', id: e.target.dataset.id, notes: newNotes });
+        const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+        renderTreatments(data.appointments);
+      }
+    }
+  });
+
+  // Rechnungen hinzufügen / Status ändern
+  document.querySelector('.add-invoice-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await apiPost({ action: 'add_invoice', patient_id: currentPatientId, amount: fd.get('amount') });
+    const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+    renderInvoices(data.invoices);
+    e.target.reset();
+  });
+  document.addEventListener('click', async e => {
+    if (e.target.classList.contains('toggle-invoice-btn')) {
+      const id = e.target.dataset.id;
+      const newStatus = e.target.dataset.status === 'paid' ? 'open' : 'paid';
+      await apiPost({ action: 'edit_invoice_status', id: id, status: newStatus, patient_id: currentPatientId });
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      renderInvoices(data.invoices);
+    }
+  });
+
+  // Notizen hinzufügen / löschen / bearbeiten
+  document.querySelector('.add-note-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await apiPost({ action: 'add_note', patient_id: currentPatientId, content: fd.get('content') });
+    const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+    renderNotes(data.notes);
+    e.target.reset();
+  });
+  document.addEventListener('click', async e => {
+    if (e.target.classList.contains('delete-note-btn')) {
+      await apiPost({ action: 'delete_note', patient_id: currentPatientId, note_id: e.target.dataset.id });
+      const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+      renderNotes(data.notes);
+    }
+    if (e.target.classList.contains('edit-note-btn')) {
+      const newContent = prompt("Neue Notiz:");
+      if (newContent) {
+        await apiPost({ action: 'edit_note', patient_id: currentPatientId, note_id: e.target.dataset.id, content: newContent });
+        const data = await apiPost({ action: 'get_patient_details', patient_id: currentPatientId });
+        renderNotes(data.notes);
+      }
+    }
+  });
+
+});
+</script>
+{% endblock %}

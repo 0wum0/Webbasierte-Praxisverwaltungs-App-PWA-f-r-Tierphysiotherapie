@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            margin-top: 20mm;
+            margin-left: 25mm;
+            margin-right: 20mm;
+            margin-bottom: 25mm;
+        }
+
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #111;
+        }
+
+        /* Farben */
+        .primary-color { background: #b3476d; color: #fff; }
+        .divider { height: 2px; background: #b3476d; margin: 8px 0 18px 0; border-radius: 2px; }
+
+        /* Header */
+        .header {
+            width: 100%;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .header img {
+            max-height: 120px;
+        }
+        .header h1 {
+            margin: 8px 0 0 0;
+            font-size: 16pt;
+            font-weight: bold;
+            color: #222;
+        }
+        .header p {
+            margin: 2px 0;
+            font-size: 10pt;
+            color: #555;
+        }
+
+        /* Titelbox Rechnung */
+        .title-box {
+            background: #b3476d;
+            color: #fff;
+            font-size: 14pt;
+            font-weight: bold;
+            padding: 8px 12px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        /* Info-Box Kunde */
+        .info {
+            border: 0.6pt solid #333;
+            padding: 10px 12px;
+            margin: 0 0 25px 0;
+            font-size: 10pt;
+            background: #fafafa;
+        }
+        .info p { margin: 2px 0; }
+
+        /* Tabelle */
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 10pt;
+        }
+        .invoice-table th, .invoice-table td {
+            border: 0.5pt solid #000;
+            padding: 6px 8px;
+        }
+        .invoice-table th {
+            background: #f2f2f2;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        /* Gesamtsumme */
+        .total {
+            margin-top: 15px;
+            padding-top: 6px;
+            text-align: right;
+            font-size: 11pt;
+            font-weight: bold;
+            border-top: 1.5pt solid #000;
+        }
+
+        /* Fußzeile */
+        .footer {
+            position: fixed;
+            bottom: 15mm;
+            left: 25mm;
+            right: 20mm;
+            text-align: center;
+            font-size: 9pt;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header mit Logo -->
+    <div class="header">
+        {% if logoPath is defined and logoPath %}
+            <img src="{{ logoPath }}" alt="Logo">
+        {% endif %}
+        <h1>Tierphysio Eileen Wenzel</h1>
+        <p>Praxis für Tierphysiotherapie</p>
+        <p>Beispielstraße 12 · 38100 Braunschweig</p>
+        <p>Tel.: 0176 12345678 · E-Mail: info@tierphysio-ew.de</p>
+    </div>
+
+    <!-- Trenner unter Header -->
+    <div class="divider"></div>
+
+    <!-- Rechnungs-Überschrift -->
+    <div class="title-box">
+        Rechnung
+    </div>
+
+    <!-- Kundeninfos -->
+    <div class="info">
+        <p><strong>Rechnungs-Nr.:</strong> {{ rechnungsNummer }}</p>
+        <p><strong>Datum:</strong> {{ today }}</p>
+        <p><strong>Patient:</strong> {{ invoice.patient_name }} {% if invoice.species %}({{ invoice.species }}){% endif %}</p>
+        <p><strong>Besitzer:</strong> {{ invoice.firstname }} {{ invoice.lastname }}</p>
+        <p>{{ invoice.street }}, {{ invoice.zipcode }} {{ invoice.city }}</p>
+    </div>
+
+    <!-- Trenner unter Kundeninfos -->
+    <div class="divider"></div>
+
+    <!-- Tabelle Leistungen -->
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th style="width: 10%; text-align:center;">Nr.</th>
+                <th style="width: 40%;">Leistung</th>
+                <th style="width: 10%; text-align:right;">Menge</th>
+                <th style="width: 20%; text-align:right;">Einzelpreis (€)</th>
+                <th style="width: 20%; text-align:right;">Gesamt (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td style="text-align:center;">{{ loop.index }}</td>
+                <td>{{ item.description }}</td>
+                <td style="text-align:right;">{{ item.quantity }}</td>
+                <td style="text-align:right;">{{ item.price|number_format(2, ',', '.') }}</td>
+                <td style="text-align:right;">{{ (item.quantity * item.price)|number_format(2, ',', '.') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;">Keine Positionen</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Gesamtsumme -->
+    <div class="total">
+        Gesamtsumme: {{ invoice.amount|number_format(2, ',', '.') }} €
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>Zahlungsziel:</strong> {{ paymentTerms|default('14 Tage nach Rechnungsdatum') }}</p>
+        <p><strong>Bankverbindung:</strong> {{ bankDetails|default('IBAN: DE00 0000 0000 0000 0000 00 – BIC: XXXXDE00XXX') }}</p>
+        <p>Vielen Dank für Ihr Vertrauen!</p>
+    </div>
+
+</body>
+</html>

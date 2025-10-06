@@ -1,0 +1,23 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2>🎂 Geburtstage (nächste 7 Tage)</h2>
+
+    <ul class="list-group mt-3">
+        {% for b in birthdays %}
+        <li class="list-group-item bg-dark text-light">
+            {% if b.type == 'patient' %}
+                🐾 {{ b.subject }} hat am {{ b.birthdate|date("d.m.") }} Geburtstag
+            {% else %}
+                👤 {{ b.subject }} hat am {{ b.birthdate|date("d.m.") }} Geburtstag
+            {% endif %}
+        </li>
+        {% else %}
+        <li class="list-group-item bg-dark text-light">Keine Geburtstage in den nächsten 7 Tagen</li>
+        {% endfor %}
+    </ul>
+
+</div>
+{% endblock %}

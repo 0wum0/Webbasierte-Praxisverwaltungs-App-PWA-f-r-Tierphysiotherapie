@@ -1,0 +1,45 @@
+{# Unified Header Component - SSoT Implementation #}
+<!-- Single Source of Truth Header - DO NOT DUPLICATE -->
+<header class="app-header topbar">
+  <div class="header-left">
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+      <i class="bi bi-list"></i>
+    </button>
+    <h1 class="app-title">Tierphysio Manager</h1>
+  </div>
+  <div class="header-right">
+    <!-- Global Search -->
+    <button class="btn btn-link text-white search-toggle" id="globalSearchBtn" aria-label="Search">
+      <i class="bi bi-search"></i>
+    </button>
+    
+    <!-- Theme Toggle - Single Icon Only -->
+    <button class="theme-toggle" id="themeToggle" title="Theme wechseln" aria-label="Toggle Theme">
+      <i class="bi bi-sun-fill icon-sun"></i>
+      <i class="bi bi-moon-fill icon-moon"></i>
+    </button>
+    
+    <!-- User Dropdown -->
+    <div class="dropdown user-dropdown">
+      <button class="dropdown-toggle" type="button" id="userMenuToggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="/public/img/user.png" alt="User" class="user-avatar">
+        <span class="username" id="headerUsername">Benutzer</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" id="userMenu" aria-labelledby="userMenuToggle">
+        <li><a class="dropdown-item" href="/profile.php"><i class="bi bi-person"></i> Profil</a></li>
+        <li><a class="dropdown-item" href="/settings.php"><i class="bi bi-gear"></i> Einstellungen</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="/logout.php"><i class="bi bi-box-arrow-right"></i> Abmelden</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<!-- Global Search Bar Overlay -->
+<div id="globalSearchBar" class="search-overlay">
+    <div class="search-overlay-content">
+        <button class="close-search" id="closeSearchBtn">&times;</button>
+        <input type="text" id="searchInput" class="form-control search-input" placeholder="Suche Patient, Besitzer, Termin..." autocomplete="off">
+        <div id="searchResults" class="search-results"></div>
+    </div>
+</div>

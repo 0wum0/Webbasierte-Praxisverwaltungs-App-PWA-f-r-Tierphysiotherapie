@@ -1,0 +1,136 @@
+/* ===== Global Header Styles (for PHP files) ===== */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #6C63FF, #8E2DE2);
+  color: #fff;
+  padding: 0.8rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  position: fixed;
+  top: 0;
+  left: 260px; /* Sidebar width */
+  right: 0;
+  z-index: 1000;
+  height: 64px;
+  transition: left 0.3s ease;
+}
+
+/* Responsive header */
+@media (max-width: 991px) {
+    .app-header {
+        left: 0;
+    }
+}
+
+body.sidebar-toggled .app-header,
+.wrapper.toggled .app-header {
+    left: 0;
+}
+
+.app-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header .menu-toggle {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.app-header .menu-toggle:hover {
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+}
+
+.app-header .app-title {
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 600;
+  color: #fff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-dropdown .dropdown-toggle {
+  background: none;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.user-dropdown .dropdown-toggle:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.user-dropdown .dropdown-toggle::after {
+  margin-left: 4px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-right: 6px;
+  object-fit: cover;
+}
+
+.username {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.dropdown-menu {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  overflow: hidden;
+  border: none;
+  margin-top: 10px;
+}
+
+.dropdown-item {
+  color: #333;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}
+
+.dropdown-item:hover {
+  background: #f2f2f2;
+}
+
+.dropdown-item i {
+  margin-right: 8px;
+  font-size: 1rem;
+}
+
+/* Ensure content is below header */
+body {
+  padding-top: 64px;
+}
+
+.main-content,
+.page-wrapper,
+.content-wrapper {
+  padding-top: 20px;
+}

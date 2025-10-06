@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+    }
+    .mail-container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .mail-header {
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+      font-size: 18px;
+    }
+    .mail-body {
+      padding: 20px;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+    }
+    .mail-footer {
+      padding: 15px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      background: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <div class="mail-container">
+    <div class="mail-header">
+      🐾 Tierphysio Eileen Wenzel
+    </div>
+    <div class="mail-body">
+      {{ body|raw }}
+    </div>
+    <div class="mail-footer">
+      Diese Nachricht wurde automatisch erstellt.<br>
+      Bitte nicht direkt darauf antworten.
+    </div>
+  </div>
+</body>
+</html>

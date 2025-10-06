@@ -1,0 +1,99 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<!-- Modal -->
+<div class="modal fade" id="newOwnerPatientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content owner-modal">
+      <div class="modal-header owner-header">
+        <h5 class="modal-title owner-title">
+          <span class="owner-avatar">➕</span>
+          <span>Neuen Besitzer anlegen</span>
+        </h5>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body owner-body">
+        <!-- Step 1: Besitzer -->
+        <form id="newOwnerForm" class="glass-slab">
+          <div class="row g-2">
+            <div class="col-md-6"><label class="tiny-label">Vorname</label><input type="text" class="form-control glass-input" name="owner_firstname" required></div>
+            <div class="col-md-6"><label class="tiny-label">Nachname</label><input type="text" class="form-control glass-input" name="owner_lastname" required></div>
+            <div class="col-md-6"><label class="tiny-label">Telefon</label><input type="text" class="form-control glass-input" name="owner_phone"></div>
+            <div class="col-md-6"><label class="tiny-label">E-Mail</label><input type="email" class="form-control glass-input" name="owner_email"></div>
+            <div class="col-md-6"><label class="tiny-label">Geburtsdatum</label><input type="date" class="form-control glass-input" name="owner_birthdate"></div>
+            <div class="col-md-6"><label class="tiny-label">Straße / Hausnr.</label><input type="text" class="form-control glass-input" name="owner_street"></div>
+            <div class="col-md-3"><label class="tiny-label">PLZ</label><input type="text" class="form-control glass-input" name="owner_zipcode"></div>
+            <div class="col-md-3"><label class="tiny-label">Ort</label><input type="text" class="form-control glass-input" name="owner_city"></div>
+          </div>
+          <div class="mt-3 text-end">
+            <button type="button" class="btn btn-primary glow-btn" id="nextStepBtn">➡️ Weiter zum Patienten</button>
+          </div>
+        </form>
+
+        <!-- Step 2: Patient -->
+        <form id="newPatientForm" class="glass-slab d-none">
+          <div class="row g-2">
+            <div class="col-md-6"><label class="tiny-label">Name</label><input type="text" class="form-control glass-input" name="patient_name" required></div>
+            <div class="col-md-6"><label class="tiny-label">Tierart</label><input type="text" class="form-control glass-input" name="patient_species"></div>
+            <div class="col-md-6"><label class="tiny-label">Rasse</label><input type="text" class="form-control glass-input" name="patient_breed"></div>
+            <div class="col-md-6"><label class="tiny-label">Geburtsdatum</label><input type="date" class="form-control glass-input" name="patient_birthdate"></div>
+            <div class="col-12"><label class="tiny-label">Symptome / Anamnese</label><textarea class="form-control glass-input" name="patient_symptoms"></textarea></div>
+            <div class="col-12"><label class="tiny-label">Aktuelle Medikamente</label><textarea class="form-control glass-input" name="patient_medications"></textarea></div>
+            <div class="col-12"><label class="tiny-label">Aktuelle Therapien</label><textarea class="form-control glass-input" name="patient_therapies"></textarea></div>
+            <div class="col-12"><label class="tiny-label">Allgemeine Notizen</label><textarea class="form-control glass-input" name="patient_notes"></textarea></div>
+          </div>
+          <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-success glow-btn">✅ Besitzer & Patient anlegen</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer owner-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Schließen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const nextBtn = document.getElementById('nextStepBtn');
+  const ownerForm = document.getElementById('newOwnerForm');
+  const patientForm = document.getElementById('newPatientForm');
+
+  nextBtn.addEventListener('click', () => {
+    ownerForm.classList.add('d-none');
+    patientForm.classList.remove('d-none');
+    document.querySelector('#newOwnerPatientModal .modal-title span:last-child').innerText = "Neuen Patienten anlegen";
+  });
+
+  patientForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      action: 'add_owner_patient',
+      ...Object.fromEntries(new FormData(ownerForm)),
+      ...Object.fromEntries(new FormData(patientForm))
+    };
+
+    try {
+      const res = await fetch('api/new_owner_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      Lobibox.notify('success', { msg: json.msg, position: 'top right' });
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('newOwnerPatientModal')).hide();
+      ownerForm.reset(); patientForm.reset();
+      ownerForm.classList.remove('d-none');
+      patientForm.classList.add('d-none');
+      document.querySelector('#newOwnerPatientModal .modal-title span:last-child').innerText = "Neuen Besitzer anlegen";
+    } catch (err) {
+      Lobibox.notify('error', { msg: '❌ ' + err.message, position: 'top right' });
+    }
+  });
+});
+</script>
+{% endblock %}

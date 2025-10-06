@@ -1,0 +1,152 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+  <div class="breadcrumb-title pe-3">Rechnungen</div>
+</div>
+
+<!-- Offene Rechnungen -->
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">📂 Offene Rechnungen</h5>
+    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newInvoiceModal">
+      ➕ Neue Rechnung
+    </button>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="openInvoicesTable" class="table table-striped table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Patient</th>
+            <th>Besitzer</th>
+            <th>Betrag</th>
+            <th style="width:290px">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in openInvoices %}
+          <tr>
+            <td>{{ inv.id }}</td>
+            <td>{{ inv.patient_name }}</td>
+            <td>{{ inv.firstname }} {{ inv.lastname }}</td>
+            <td>{{ inv.amount|number_format(2, ',', '.') }} €</td>
+            <td class="d-flex flex-wrap gap-1">
+              <a href="invoice_pdf.php?id={{ inv.id }}" target="_blank" class="btn btn-sm btn-secondary">🖨️ PDF</a>
+              <a href="send_invoice.php?id={{ inv.id }}" class="btn btn-sm btn-success">✉️ Senden</a>
+              <a href="edit_invoice.php?id={{ inv.id }}" class="btn btn-sm btn-warning">✏️ Bearbeiten</a>
+              <a href="invoice_status.php?id={{ inv.id }}&status=paid" class="btn btn-sm btn-primary">✅ Bezahlt</a>
+              <a href="delete_invoice.php?id={{ inv.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Rechnung wirklich löschen?');">🗑️ Löschen</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted">Keine offenen Rechnungen</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Bezahlte Rechnungen -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0">✅ Bezahlte Rechnungen</h5>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="paidInvoicesTable" class="table table-striped table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Patient</th>
+            <th>Besitzer</th>
+            <th>Betrag</th>
+            <th style="width:290px">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in paidInvoices %}
+          <tr>
+            <td>{{ inv.id }}</td>
+            <td>{{ inv.patient_name }}</td>
+            <td>{{ inv.firstname }} {{ inv.lastname }}</td>
+            <td>{{ inv.amount|number_format(2, ',', '.') }} €</td>
+            <td class="d-flex flex-wrap gap-1">
+              <a href="invoice_pdf.php?id={{ inv.id }}" target="_blank" class="btn btn-sm btn-secondary">🖨️ PDF</a>
+              <a href="send_invoice.php?id={{ inv.id }}" class="btn btn-sm btn-success">✉️ Erneut senden</a>
+              <a href="edit_invoice.php?id={{ inv.id }}" class="btn btn-sm btn-warning">✏️ Bearbeiten</a>
+              <a href="invoice_status.php?id={{ inv.id }}&status=open" class="btn btn-sm btn-light">↩️ Offen</a>
+              <a href="delete_invoice.php?id={{ inv.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Rechnung wirklich löschen?');">🗑️ Löschen</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted">Keine bezahlten Rechnungen</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neue Rechnung -->
+<div class="modal fade" id="newInvoiceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title">➕ Neue Rechnung erstellen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="invoices.php">
+        {{ csrf_field()|raw }}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Patient</label>
+            <select class="form-select" name="patient_id" required>
+              <option value="">-- Patient auswählen --</option>
+              {% for p in patients %}
+                <option value="{{ p.id }}">{{ p.name }} ({{ p.firstname }} {{ p.lastname }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Betrag (€)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Beschreibung</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">💾 Speichern</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- kleine Seite-spezifische Scripts (DataTables Init) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.jQuery && $.fn.DataTable) {
+    $('#openInvoicesTable').DataTable({
+      pageLength: 10,
+      order: [[0, 'desc']],
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/de-DE.json' }
+    });
+    $('#paidInvoicesTable').DataTable({
+      pageLength: 10,
+      order: [[0, 'desc']],
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/de-DE.json' }
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+
+        <!-- Patientenheader -->
+        <div class="card radius-10 mb-4 bg-dark text-light">
+            <div class="card-body d-flex align-items-center">
+                <div class="me-3">
+                    {% if patient.image %}
+                        <img src="{{ patient.image }}" alt="Bild von {{ patient.name }}" class="rounded shadow" style="max-height:100px;">
+                    {% else %}
+                        <span class="badge bg-secondary">Kein Bild</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="mb-1">🐾 {{ patient.name }}</h3>
+                    <p class="mb-0 text-muted">{{ patient.species }} – {{ patient.breed }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card radius-10 bg-dark text-light">
+            <div class="card-header border-bottom-0 pb-0">
+                <ul class="nav nav-tabs card-header-tabs" id="patientTabs" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#befund">Befund</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#medikamente">Medikamente</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#therapien">Therapien</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#termine">Termine</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#rechnungen">Rechnungen</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#notizen">Notizen</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#besitzer">Besitzer</a></li>
+                </ul>
+            </div>
+
+            <div class="card-body tab-content">
+                <!-- Befund -->
+                <div class="tab-pane fade show active" id="befund">
+                    <h5>Befund</h5>
+                    <p>{{ patient.findings|default("Kein Befund eingetragen") }}</p>
+                    <a href="print_befund.php?id={{ patient.id }}" class="btn btn-sm btn-outline-light">🖨️ Drucken</a>
+                </div>
+
+                <!-- Medikamente -->
+                <div class="tab-pane fade" id="medikamente">
+                    <h5>Medikamente</h5>
+                    <p>{{ patient.medications|default("Keine Medikamente eingetragen") }}</p>
+                </div>
+
+                <!-- Therapien -->
+                <div class="tab-pane fade" id="therapien">
+                    <h5>Aktuelle Therapien</h5>
+                    <p>{{ patient.therapies|default("Keine Therapien eingetragen") }}</p>
+                </div>
+
+                <!-- Termine -->
+                <div class="tab-pane fade" id="termine">
+                    <h5>Termine</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for t in appointments %}
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            {{ t.appointment_date|date("d.m.Y H:i") }} – {{ t.notes|default("Keine Notizen") }}
+                            <span class="badge bg-primary">Dauer: {{ t.duration }} Min</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item bg-dark text-light">Keine Termine vorhanden</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="edit_appointment.php?patient_id={{ patient.id }}" class="btn btn-success mt-2">➕ Termin hinzufügen</a>
+                </div>
+
+                <!-- Rechnungen -->
+                <div class="tab-pane fade" id="rechnungen">
+                    <h5>Rechnungen</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for inv in invoices %}
+                        <li class="list-group-item bg-dark text-light d-flex justify-content-between">
+                            #{{ inv.id }} – {{ inv.amount|number_format(2, ',', '.') }} € – {{ inv.status }}
+                            <a href="invoice_pdf.php?id={{ inv.id }}" target="_blank" class="btn btn-sm btn-outline-info">PDF</a>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item bg-dark text-light">Keine Rechnungen vorhanden</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="create_invoice.php?patient_id={{ patient.id }}" class="btn btn-success mt-2">➕ Rechnung erstellen</a>
+                </div>
+
+                <!-- Notizen -->
+                <div class="tab-pane fade" id="notizen">
+                    <h5>Notizen</h5>
+                    <form method="post" class="mb-3">
+        {{ csrf_field()|raw }}
+                        <textarea name="note_content" class="form-control mb-2" rows="3" placeholder="Neue Notiz eingeben..." required></textarea>
+                        <button type="submit" class="btn btn-success">💾 Notiz speichern</button>
+                    </form>
+
+                    <ul class="list-group list-group-flush">
+                        {% for note in notes %}
+                        <li class="list-group-item bg-dark text-light">
+                            {{ note.content }}
+                            <br><small class="text-muted">{{ note.created_at|date("d.m.Y H:i") }}</small>
+                            <a href="patient.php?id={{ patient.id }}&delete_note={{ note.id }}" 
+                               class="btn btn-sm btn-danger float-end" 
+                               onclick="return confirm('Notiz wirklich löschen?');">🗑️ Löschen</a>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item bg-dark text-light">Keine Notizen vorhanden</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Besitzer -->
+                <div class="tab-pane fade" id="besitzer">
+                    <h5>Besitzerinformationen</h5>
+                    <p>
+                        <strong>{{ patient.firstname }} {{ patient.lastname }}</strong><br>
+                        {{ patient.street }}, {{ patient.zipcode }} {{ patient.city }}<br>
+                        📞 {{ patient.phone }}<br>
+                        ✉️ {{ patient.email }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
