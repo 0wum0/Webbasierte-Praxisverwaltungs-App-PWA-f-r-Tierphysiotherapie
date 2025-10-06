@@ -3,15 +3,9 @@
 {% block title %}{{ title|default("Tierphysio Manager 🐾") }}{% endblock %}
 
 {% block content %}
-<div class="page-wrapper">
-    <div class="page-content">
-        <div class="container-fluid">
-            {% block inner_content %}
-            <!-- Seiteninhalt hier -->
-            {% endblock %}
-        </div>
-    </div>
-</div>
+    {% block inner_content %}
+    <!-- Seiteninhalt hier -->
+    {% endblock %}
 {% endblock %}
 
 {% block scripts %}
