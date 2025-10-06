@@ -152,11 +152,14 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
             padding: 1.5rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             margin-bottom: 1.5rem;
+            position: relative;
+            height: auto !important;
         }
         
         /* Fix chart container heights */
-        #revenueChart {
+        .chart-card canvas {
             max-height: 300px !important;
+            height: 300px !important;
             height: 300px !important;
         }
         
@@ -392,7 +395,9 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
                     <h3 class="chart-title">
                         <i class="bi bi-graph-up me-2"></i>Umsatzentwicklung (12 Monate)
                     </h3>
-                    <canvas id="revenueChart" height="100"></canvas>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Invoice Status -->
@@ -402,7 +407,9 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
                             <h3 class="chart-title">
                                 <i class="bi bi-pie-chart me-2"></i>Rechnungsstatus
                             </h3>
-                            <canvas id="invoiceChart" height="200"></canvas>
+                            <div style="position: relative; height: 200px;">
+                                <canvas id="invoiceChart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -410,7 +417,9 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
                             <h3 class="chart-title">
                                 <i class="bi bi-bar-chart me-2"></i>Top Services
                             </h3>
-                            <canvas id="servicesChart" height="200"></canvas>
+                            <div style="position: relative; height: 200px;">
+                                <canvas id="servicesChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
