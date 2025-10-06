@@ -5,6 +5,11 @@ declare(strict_types=1);
  * Login-Seite für Tierphysio Praxis PWA
  */
 
+// Fehleranzeige aktivieren für Debugging
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 // Bootstrap laden
 require_once __DIR__ . '/includes/bootstrap.php';
 
@@ -32,16 +37,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Login versuchen
         if (function_exists('admin_login')) {
-            require_once __DIR__ . '/includes/db.php';
-            
-            if (admin_login($email, $password, $pdo)) {
-                // Erfolgreicher Login - Weiterleitung
-                $redirectTo = $_SESSION['redirect_after_login'] ?? '/dashboard.php';
-                unset($_SESSION['redirect_after_login']);
-                header('Location: ' . $redirectTo);
-                exit;
-            } else {
-                $error = 'Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.';
+            try {
+                // Datenbank-Verbindung laden
+                require_once __DIR__ . '/includes/db.php';
+                
+                // PDO-Instanz abrufen mit der neuen db() Funktion
+                $pdo = function_exists('db') ? db() : null;
+                
+                if (!$pdo) {
+                    throw new Exception('Datenbankverbindung konnte nicht hergestellt werden.');
+                }
+                
+                if (admin_login($email, $password, $pdo)) {
+                    // Erfolgreicher Login - Weiterleitung
+                    $redirectTo = $_SESSION['redirect_after_login'] ?? '/dashboard.php';
+                    unset($_SESSION['redirect_after_login']);
+                    header('Location: ' . $redirectTo);
+                    exit;
+                } else {
+                    $error = 'Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.';
+                }
+            } catch (Exception $e) {
+                // Datenbankfehler abfangen
+                $error = "Datenbankverbindung konnte nicht hergestellt werden. Bitte prüfen Sie die Konfiguration in includes/config.php.";
+                
+                // In Entwicklung: Details anzeigen
+                if (config('app.env', 'production') === 'development' || config('app.debug', false)) {
+                    $error .= "<br><small>Details: " . htmlspecialchars($e->getMessage()) . "</small>";
+                }
             }
         } else {
             $error = 'Login-System nicht verfügbar. Bitte kontaktieren Sie den Administrator.';

@@ -214,8 +214,8 @@ register_shutdown_function(function() {
 // Installation und Login Guards
 // ============================================================================
 
-// WICHTIG: Absolute Pfade für Lock-Datei verwenden, um Redirect-Loops zu vermeiden
-$installLock = dirname(__DIR__) . '/install/installed.lock';
+// WICHTIG: Lock-Datei jetzt im includes-Ordner (install-Ordner kann gelöscht werden)
+$installLock = __DIR__ . '/installed.lock';
 
 // Aktuelle Request-Informationen ermitteln
 $currentScript = $_SERVER['SCRIPT_NAME'] ?? '';
@@ -238,11 +238,17 @@ $isApiEndpoint = str_contains($currentScript, '/api/');
 if (!file_exists($installLock)) {
     // System ist NICHT installiert
     
+    // Prüfe ob Install-Ordner noch existiert
+    $installDir = dirname(__DIR__) . '/install';
+    
     // Wenn wir nicht bereits im Installer sind und es kein Static Asset ist
     if (!$isInstaller && !$isStaticAsset) {
-        // Zum Installer weiterleiten
-        header('Location: /install/installer.php');
-        exit('System ist nicht installiert. Bitte führen Sie die <a href="/install/installer.php">Installation</a> durch.');
+        // NUR weiterleiten wenn der Install-Ordner existiert
+        if (is_dir($installDir)) {
+            header('Location: /install/installer.php');
+            exit('System ist nicht installiert. Bitte führen Sie die <a href="/install/installer.php">Installation</a> durch.');
+        }
+        // Kein Installer-Ordner = Installation wurde gelöscht, weiter ohne Redirect
     }
     // Installer darf ausgeführt werden, wenn Lock-Datei fehlt
     
@@ -378,6 +384,6 @@ if (function_exists('logDebug')) {
         'autoloader' => $autoloaderLoaded ? 'loaded' : 'not found',
         'environment' => APP_ENV,
         'debug' => APP_DEBUG,
-        'installed' => file_exists($installedLockFile),
+        'installed' => file_exists($installLock),
     ]);
 }
