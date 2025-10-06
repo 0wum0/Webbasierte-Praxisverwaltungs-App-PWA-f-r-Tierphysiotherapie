@@ -6,6 +6,18 @@
     <h1 class="app-title">Tierphysio Praxis</h1>
   </div>
   <div class="header-right">
+    <!-- Search Button -->
+    <button class="btn btn-link text-white search-toggle" onclick="openSearch()">
+      <i class="bi bi-search"></i>
+    </button>
+    
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" title="Theme wechseln">
+      <i class="bi bi-sun-fill light-icon"></i>
+      <i class="bi bi-moon-fill dark-icon"></i>
+    </button>
+    
+    <!-- User Dropdown -->
     <div class="dropdown user-dropdown">
       <button class="dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
         <img src="/public/img/user.png" alt="User" class="user-avatar">
