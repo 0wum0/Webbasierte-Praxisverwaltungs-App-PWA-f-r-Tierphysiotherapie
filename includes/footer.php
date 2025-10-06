@@ -1,9 +1,9 @@
 <?php
 /**
- * Unified Footer Component
- * Modern footer matching dashboard design with animations and changelog
+ * Unified Footer Component - Scrollable Design
+ * Modern footer that scrolls with content (not fixed)
  * @package TierphysioManager
- * @version 3.0
+ * @version 3.0.0
  */
 
 // Include version information if available
@@ -21,7 +21,7 @@ if (file_exists(__DIR__ . '/version.php')) {
 $currentYear = date('Y');
 ?>
 
-<!-- Unified Footer -->
+<!-- Unified Footer (Scrollable, not fixed) -->
 <footer class="page-footer">
     <div class="footer-content">
         <p class="footer-main">© <?php echo $currentYear; ?> Tierphysio Eileen Wenzel – Alle Rechte vorbehalten.</p>
@@ -40,11 +40,6 @@ $currentYear = date('Y');
 <a href="javascript:void(0);" class="back-to-top" id="backToTop">
     <i class='bx bxs-up-arrow-alt'></i>
 </a>
-
-<!-- Theme Toggle Button (Floating) -->
-<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-    <i class="bi bi-moon-fill"></i>
-</button>
 
 <!-- Loading Overlay -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -103,7 +98,7 @@ $currentYear = date('Y');
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
-                <a href="/install/install.php" class="btn btn-primary">
+                <a href="/install/installer.php" class="btn btn-primary">
                     <i class="bi bi-arrow-repeat me-2"></i>Nach Updates suchen
                 </a>
             </div>
@@ -113,30 +108,35 @@ $currentYear = date('Y');
 <?php endif; ?>
 
 <style>
-/* Footer Styles */
+/* Footer Styles - SCROLLABLE (NOT FIXED) */
 .page-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
-    padding: 0.75rem 1rem;
+    position: relative; /* Changed from fixed to relative */
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.03), rgba(156, 39, 176, 0.03));
+    border-top: 2px solid rgba(124, 77, 255, 0.1);
+    padding: 2rem 1rem;
     text-align: center;
-    z-index: 1000;
-    box-shadow: 0 -2px 10px var(--shadow-sm);
+    margin-top: 3rem;
+    box-shadow: 0 -2px 10px rgba(124, 77, 255, 0.05);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
 }
 
+/* Adjust for sidebar on desktop */
 @media (min-width: 992px) {
     .page-footer {
-        left: 260px;
+        margin-left: 260px;
+        width: calc(100% - 260px);
     }
     
     .wrapper.toggled .page-footer {
-        left: 0;
+        margin-left: 0;
+        width: 100%;
     }
+}
+
+[data-theme="dark"] .page-footer {
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.05), rgba(156, 39, 176, 0.05));
+    border-top-color: rgba(156, 39, 176, 0.2);
 }
 
 .footer-content {
@@ -146,36 +146,49 @@ $currentYear = date('Y');
 
 .page-footer p {
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.6;
 }
 
 .footer-main {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    color: #4b5563;
     font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+[data-theme="dark"] .footer-main {
+    color: #e5e7eb;
 }
 
 .footer-credits {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.8125rem;
+    color: #9ca3af;
     opacity: 0;
     animation: fadeInFooter 2s ease-in forwards;
     animation-delay: 0.5s;
 }
 
+[data-theme="dark"] .footer-credits {
+    color: #6b7280;
+}
+
 .footer-links {
-    margin-top: 0.5rem;
+    margin-top: 1rem;
 }
 
 .footer-link {
-    color: var(--primary-color);
+    color: #7C4DFF;
     text-decoration: none;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 .footer-link:hover {
-    color: var(--primary-dark);
+    color: #9C27B0;
+    text-decoration: none;
 }
 
 @keyframes fadeInFooter {
@@ -189,6 +202,7 @@ $currentYear = date('Y');
     }
 }
 
+/* Shine effect */
 .page-footer::after {
     content: "";
     position: absolute;
@@ -207,21 +221,14 @@ $currentYear = date('Y');
     50% { left: 120%; }
 }
 
-/* Dark mode footer */
-[data-theme="dark"] .page-footer,
-body.dark-mode .page-footer {
-    background: var(--bg-secondary);
-    border-top-color: var(--border-color);
-}
-
 /* Back to Top Button */
 .back-to-top {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    width: 45px;
-    height: 45px;
-    background: var(--primary-gradient);
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #7C4DFF, #9C27B0);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -233,7 +240,7 @@ body.dark-mode .page-footer {
     visibility: hidden;
     transition: all 0.3s ease;
     z-index: 999;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
 }
 
 .back-to-top.show {
@@ -242,43 +249,9 @@ body.dark-mode .page-footer {
 }
 
 .back-to-top:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-xl);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(124, 77, 255, 0.4);
     color: white;
-}
-
-/* Theme Toggle Floating Button */
-.theme-toggle {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: var(--card-bg);
-    border: 2px solid var(--primary-color);
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    box-shadow: var(--shadow-lg);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 998;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    color: var(--text-primary);
-}
-
-.theme-toggle:hover {
-    transform: scale(1.1) rotate(180deg);
-    box-shadow: var(--shadow-xl);
-    background: var(--primary-gradient);
-    border-color: transparent;
-    color: white;
-}
-
-/* Adjust position when back-to-top is visible */
-.back-to-top.show ~ .theme-toggle {
-    bottom: 5.5rem;
 }
 
 /* Loading Overlay */
@@ -296,9 +269,8 @@ body.dark-mode .page-footer {
     backdrop-filter: blur(5px);
 }
 
-[data-theme="dark"] .loading-overlay,
-body.dark-mode .loading-overlay {
-    background: rgba(18, 18, 18, 0.95);
+[data-theme="dark"] .loading-overlay {
+    background: rgba(26, 29, 35, 0.95);
 }
 
 .loading-overlay.active {
@@ -308,8 +280,8 @@ body.dark-mode .loading-overlay {
 .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid var(--bg-tertiary);
-    border-top: 4px solid var(--primary-color);
+    border: 4px solid rgba(124, 77, 255, 0.1);
+    border-top: 4px solid #7C4DFF;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -320,10 +292,27 @@ body.dark-mode .loading-overlay {
 }
 
 /* Changelog Modal Styles */
+.modal-content {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #7C4DFF, #9C27B0);
+    color: white;
+    border: none;
+}
+
+[data-theme="dark"] .modal-content {
+    background: #1a1d23;
+    color: #e5e7eb;
+}
+
 .changelog-entry {
     margin-bottom: 1.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(124, 77, 255, 0.1);
 }
 
 .changelog-entry:last-child {
@@ -339,11 +328,11 @@ body.dark-mode .loading-overlay {
     color: white;
 }
 
-.version-release { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
-.version-feature { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); }
-.version-bugfix { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); }
-.version-security { background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); }
-.version-default { background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%); }
+.version-release { background: linear-gradient(135deg, #10b981, #34d399); }
+.version-feature { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.version-bugfix { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.version-security { background: linear-gradient(135deg, #ef4444, #f87171); }
+.version-default { background: linear-gradient(135deg, #6b7280, #9ca3af); }
 
 .changes-list {
     margin-top: 1rem;
@@ -355,7 +344,11 @@ body.dark-mode .loading-overlay {
     align-items: start;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
-    color: var(--text-secondary);
+    color: #6b7280;
+}
+
+[data-theme="dark"] .change-item {
+    color: #9ca3af;
 }
 
 .change-item i {
@@ -366,18 +359,26 @@ body.dark-mode .loading-overlay {
 .developer-info {
     margin-top: 2rem;
     padding: 1rem;
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
+    background: rgba(124, 77, 255, 0.05);
+    border-radius: 12px;
+}
+
+[data-theme="dark"] .developer-info {
+    background: rgba(156, 39, 176, 0.05);
 }
 
 .developer-info h6 {
-    color: var(--text-primary);
+    color: #7C4DFF;
     margin-bottom: 0.75rem;
 }
 
 .developer-info p {
-    color: var(--text-secondary);
+    color: #6b7280;
     margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .developer-info p {
+    color: #9ca3af;
 }
 
 .dev-details {
@@ -390,74 +391,72 @@ body.dark-mode .loading-overlay {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--text-secondary);
+    color: #6b7280;
+}
+
+[data-theme="dark"] .dev-details > div {
+    color: #9ca3af;
 }
 
 .dev-details i {
     width: 20px;
-    color: var(--primary-color);
+    color: #7C4DFF;
 }
 
 .dev-details a {
-    color: var(--primary-color);
+    color: #7C4DFF;
     text-decoration: none;
 }
 
 .dev-details a:hover {
+    color: #9C27B0;
     text-decoration: underline;
 }
 
-/* Modal Dark Mode Support */
-[data-theme="dark"] .modal-content,
-body.dark-mode .modal-content {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+/* Modal buttons */
+.modal-footer .btn-primary {
+    background: linear-gradient(135deg, #7C4DFF, #9C27B0);
+    border: none;
 }
 
-[data-theme="dark"] .modal-header,
-body.dark-mode .modal-header {
-    background: var(--primary-gradient);
-    color: white;
-    border-bottom: 1px solid var(--border-color);
-}
-
-[data-theme="dark"] .btn-close,
-body.dark-mode .btn-close {
-    filter: invert(1);
-}
-
-[data-theme="dark"] .developer-info,
-body.dark-mode .developer-info {
-    background: var(--bg-tertiary);
+.modal-footer .btn-primary:hover {
+    background: linear-gradient(135deg, #6B4BAE, #8B1FA2);
+    transform: translateY(-1px);
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .page-footer {
-        padding: 0.5rem;
-        left: 0 !important;
+        padding: 1.5rem 1rem;
+        margin-left: 0 !important;
+        width: 100% !important;
     }
     
     .footer-main {
-        font-size: 0.75rem;
+        font-size: 0.875rem;
     }
     
     .footer-credits {
-        font-size: 0.625rem;
+        font-size: 0.75rem;
     }
     
-    .back-to-top,
-    .theme-toggle {
-        width: 40px;
-        height: 40px;
+    .back-to-top {
+        width: 45px;
+        height: 45px;
         font-size: 1rem;
         bottom: 1rem;
         right: 1rem;
     }
-    
-    .back-to-top.show ~ .theme-toggle {
-        bottom: 4rem;
-    }
+}
+
+/* Ensure content doesn't go under footer */
+.page-wrapper {
+    min-height: 100vh;
+    padding-bottom: 2rem; /* Space before footer */
+}
+
+.page-content {
+    padding-bottom: 2rem;
 }
 </style>
 
@@ -486,4 +485,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Loading overlay helper functions
+window.showLoading = function() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+};
+
+window.hideLoading = function() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+};
 </script>

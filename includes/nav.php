@@ -1,13 +1,15 @@
 <?php
 /**
  * Unified Navigation/Sidebar Component
- * Modern sidebar navigation matching dashboard design
+ * Modern sidebar with violet gradient active states
+ * @package TierphysioManager
+ * @version 3.0.0
  */
 
 // Get current page for active state
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-// Navigation items configuration
+// Navigation items configuration - ALL LINKS RESTORED
 $navItems = [
     [
         'id' => 'nav-dashboard',
@@ -24,6 +26,27 @@ $navItems = [
         'page' => 'patients.php'
     ],
     [
+        'id' => 'nav-appointments',
+        'href' => 'appointments.php',
+        'icon' => 'bx bx-calendar',
+        'title' => 'Termine',
+        'page' => 'appointments.php'
+    ],
+    [
+        'id' => 'nav-notes',
+        'href' => 'notes.php',
+        'icon' => 'bx bx-note',
+        'title' => 'Notizen',
+        'page' => 'notes.php'
+    ],
+    [
+        'id' => 'nav-invoices',
+        'href' => 'invoices.php',
+        'icon' => 'bx bx-receipt',
+        'title' => 'Rechnungen',
+        'page' => 'invoices.php'
+    ],
+    [
         'id' => 'nav-owners',
         'href' => 'owners.php',
         'icon' => 'bx bx-user',
@@ -36,27 +59,6 @@ $navItems = [
         'icon' => 'bx bx-user-plus',
         'title' => 'Besitzer & Patient',
         'page' => 'owner_patient.php'
-    ],
-    [
-        'id' => 'nav-appointments',
-        'href' => 'appointments.php',
-        'icon' => 'bx bx-calendar',
-        'title' => 'Termine',
-        'page' => 'appointments.php'
-    ],
-    [
-        'id' => 'nav-invoices',
-        'href' => 'invoices.php',
-        'icon' => 'bx bx-receipt',
-        'title' => 'Rechnungen',
-        'page' => 'invoices.php'
-    ],
-    [
-        'id' => 'nav-notes',
-        'href' => 'notes.php',
-        'icon' => 'bx bx-note',
-        'title' => 'Notizen',
-        'page' => 'notes.php'
     ],
     [
         'id' => 'nav-bookkeeping',
@@ -74,7 +76,7 @@ $navItems = [
     ]
 ];
 
-// Check if admin section should be shown
+// Add admin section if user is admin
 $isAdmin = isset($_SESSION['admin_id']);
 if ($isAdmin) {
     $navItems[] = [
@@ -89,10 +91,10 @@ if ($isAdmin) {
 
 <!-- Sidebar Wrapper -->
 <div class="sidebar-wrapper" data-simplebar="true">
-    <!-- Sidebar Header -->
+    <!-- Sidebar Header with Violet Gradient -->
     <div class="sidebar-header">
         <div class="sidebar-logo">
-            <span style="font-size: 1.5rem;">🐾</span>
+            <span style="font-size: 1.75rem;">🐾</span>
             <span class="logo-text">Tierphysio Manager</span>
         </div>
         <div class="toggle-icon ms-auto d-lg-block d-none">
@@ -119,10 +121,13 @@ if ($isAdmin) {
         </ul>
     </div>
 
-    <!-- Sidebar Footer (Optional) -->
+    <!-- Sidebar Footer -->
     <div class="sidebar-footer">
-        <div class="d-flex align-items-center p-3 border-top">
-            <small class="text-muted">Version 3.0.0</small>
+        <div class="d-flex align-items-center justify-content-between p-3 border-top">
+            <small class="text-muted">Version <?php echo defined('APP_VERSION') ? APP_VERSION : '3.0.0'; ?></small>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#changelogModal" class="text-decoration-none">
+                <i class="bi bi-journal-text text-muted"></i>
+            </a>
         </div>
     </div>
 </div>
@@ -131,21 +136,26 @@ if ($isAdmin) {
 <div class="sidebar-overlay"></div>
 
 <style>
-/* Custom Sidebar Styles */
+/* Sidebar Styles with Violet Theme */
 .sidebar-wrapper {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
     width: 260px;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
+    background: #ffffff;
+    border-right: 1px solid rgba(124, 77, 255, 0.1);
     z-index: 1040;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+[data-theme="dark"] .sidebar-wrapper {
+    background: #1a1d23;
+    border-right-color: rgba(156, 39, 176, 0.2);
 }
 
 /* Desktop: Sidebar visible by default */
@@ -160,20 +170,21 @@ if ($isAdmin) {
     }
 }
 
-/* Mobile: Sidebar hidden by default */
+/* Mobile: Sidebar hidden by default, show when active */
 .sidebar-wrapper.active {
     transform: translateX(0);
 }
 
-/* Sidebar Header */
+/* Sidebar Header with Violet Gradient */
 .sidebar-header {
     padding: 1.25rem 1rem;
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #7C4DFF, #9C27B0);
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(124, 77, 255, 0.2);
 }
 
 .sidebar-logo {
@@ -182,17 +193,26 @@ if ($isAdmin) {
     gap: 0.75rem;
     font-size: 1.25rem;
     font-weight: 600;
+    color: white;
+}
+
+.logo-text {
+    background: linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.9));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
 }
 
 .toggle-icon {
     cursor: pointer;
     padding: 0.25rem;
-    border-radius: var(--radius-sm);
-    transition: background 0.2s;
+    border-radius: 8px;
+    transition: all 0.2s;
+    color: white;
 }
 
 .toggle-icon:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Sidebar Navigation */
@@ -202,6 +222,7 @@ if ($isAdmin) {
     padding: 1rem 0;
 }
 
+/* Custom scrollbar */
 .sidebar-nav::-webkit-scrollbar {
     width: 6px;
 }
@@ -211,10 +232,15 @@ if ($isAdmin) {
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-    background: var(--text-muted);
+    background: rgba(124, 77, 255, 0.2);
     border-radius: 3px;
 }
 
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(124, 77, 255, 0.3);
+}
+
+/* Menu Styling */
 .metismenu {
     list-style: none;
     padding: 0;
@@ -223,31 +249,45 @@ if ($isAdmin) {
 
 .metismenu li {
     margin-bottom: 0.25rem;
+    padding: 0 0.75rem;
 }
 
 .metismenu li a {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
-    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    color: #4b5563;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     position: relative;
+    border-radius: 12px;
     border-left: 3px solid transparent;
 }
 
-.metismenu li a:hover {
-    background: var(--bg-tertiary);
-    color: var(--primary-color);
-    border-left-color: var(--primary-color);
+[data-theme="dark"] .metismenu li a {
+    color: #9ca3af;
 }
 
+.metismenu li a:hover {
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.05), rgba(156, 39, 176, 0.05));
+    color: #7C4DFF;
+    border-left-color: #7C4DFF;
+    transform: translateX(4px);
+}
+
+/* Active state with gradient */
 .metismenu li.active > a,
 .metismenu li a.active {
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #7C4DFF, #9C27B0);
     color: white;
     border-left-color: white;
+    box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+}
+
+.metismenu li.active > a:hover,
+.metismenu li a.active:hover {
+    transform: translateX(2px);
 }
 
 .metismenu .parent-icon {
@@ -267,8 +307,21 @@ if ($isAdmin) {
 /* Sidebar Footer */
 .sidebar-footer {
     margin-top: auto;
-    background: var(--bg-tertiary);
+    background: rgba(124, 77, 255, 0.03);
     flex-shrink: 0;
+}
+
+[data-theme="dark"] .sidebar-footer {
+    background: rgba(156, 39, 176, 0.05);
+}
+
+.sidebar-footer a {
+    color: #7C4DFF;
+    transition: color 0.2s;
+}
+
+.sidebar-footer a:hover {
+    color: #9C27B0;
 }
 
 /* Sidebar Overlay */
@@ -279,9 +332,9 @@ if ($isAdmin) {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.6), rgba(156, 39, 176, 0.6));
     z-index: 1039;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(5px);
 }
 
 .sidebar-overlay.active {
@@ -316,26 +369,53 @@ if ($isAdmin) {
 .sidebar-wrapper.active .metismenu li:nth-child(9) { animation-delay: 0.45s; }
 .sidebar-wrapper.active .metismenu li:nth-child(10) { animation-delay: 0.50s; }
 
-/* Hover effects with glow */
-.metismenu li a {
-    position: relative;
-    overflow: hidden;
-}
-
-.metismenu li a::after {
+/* Hover effect with glow */
+.metismenu li a::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.5s;
-    transform: translateY(-50%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.1), rgba(156, 39, 176, 0.1));
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
 }
 
-.metismenu li a:hover::after {
-    left: 100%;
+.metismenu li a:hover::before {
+    opacity: 1;
+}
+
+/* Shine effect on active items */
+@keyframes menuShine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.metismenu li.active > a::after,
+.metismenu li a.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    background-size: 200% 100%;
+    animation: menuShine 3s linear infinite;
+    pointer-events: none;
+    border-radius: 12px;
 }
 
 /* Responsive adjustments */
@@ -344,18 +424,69 @@ if ($isAdmin) {
         display: none !important;
     }
 }
-
-/* Dark mode specific adjustments */
-[data-theme="dark"] .sidebar-wrapper {
-    background: var(--bg-secondary);
-    border-right-color: var(--border-color);
-}
-
-[data-theme="dark"] .metismenu li a:hover {
-    background: rgba(124, 77, 255, 0.1);
-}
-
-[data-theme="dark"] .sidebar-footer {
-    background: var(--bg-tertiary);
-}
 </style>
+
+<script>
+// Sidebar functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector('.sidebar-wrapper');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const toggleBtn = document.querySelector('.mobile-toggle-menu');
+    const collapseBtn = document.querySelector('.toggle-icon');
+    const wrapper = document.querySelector('.wrapper');
+    
+    // Mobile toggle
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const isDesktop = window.innerWidth >= 992;
+            
+            if (isDesktop) {
+                // Desktop: Toggle wrapper class
+                if (wrapper) {
+                    wrapper.classList.toggle('toggled');
+                }
+            } else {
+                // Mobile: Toggle sidebar and overlay
+                if (sidebar) {
+                    sidebar.classList.toggle('active');
+                }
+                if (overlay) {
+                    overlay.classList.toggle('active');
+                }
+            }
+        });
+    }
+    
+    // Desktop collapse button
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', function() {
+            if (wrapper) {
+                wrapper.classList.toggle('toggled');
+            }
+        });
+    }
+    
+    // Close on overlay click (mobile)
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            if (sidebar) {
+                sidebar.classList.remove('active');
+            }
+            overlay.classList.remove('active');
+        });
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        const isDesktop = window.innerWidth >= 992;
+        
+        if (isDesktop && sidebar) {
+            // Remove mobile classes on desktop
+            sidebar.classList.remove('active');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        }
+    });
+});
+</script>

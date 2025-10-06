@@ -15,9 +15,9 @@
   const THEME_DARK = 'dark';
   const DEFAULT_THEME = THEME_LIGHT;
   
-  // Icons for theme toggle button
-  const ICON_LIGHT = '☀️';
-  const ICON_DARK = '🌙';
+  // Icons for theme toggle button (using Bootstrap Icons)
+  const ICON_LIGHT = '<i class="bi bi-sun-fill"></i>';
+  const ICON_DARK = '<i class="bi bi-moon-fill"></i>';
   
   /**
    * Theme Manager Class

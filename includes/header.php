@@ -1,7 +1,9 @@
 <?php
 /**
- * Unified Header Component
- * Modern dashboard-style header with theme toggle and user menu
+ * Unified Header Component - Violet Gradient Design
+ * Restored original violet/lilac gradient header with glass effect
+ * @package TierphysioManager
+ * @version 3.0.0
  */
 
 // Ensure session is started
@@ -15,161 +17,205 @@ $userEmail = $_SESSION['user_email'] ?? $_SESSION['admin_email'] ?? '';
 $userRole = isset($_SESSION['admin_id']) ? 'Administrator' : 'Benutzer';
 $userAvatar = $_SESSION['user_avatar'] ?? 'assets/images/avatars/avatar-2.png';
 
-// Determine if we're on dashboard (gradient navbar) or other pages (standard header)
+// Current page for active state
 $currentPage = basename($_SERVER['PHP_SELF']);
-$isDashboard = ($currentPage === 'dashboard.php');
 ?>
 
-<?php if ($isDashboard): ?>
-<!-- Dashboard Gradient Navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="dashboard.php">
-            <i class="bi bi-activity me-2"></i>
-            Tierphysio Manager
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+<!-- Unified Violet Gradient Header (Global) -->
+<header class="topbar">
+    <nav class="navbar navbar-expand gap-3 w-100">
+        <!-- Mobile Menu Toggle -->
+        <div class="mobile-toggle-menu d-lg-none">
+            <i class='bx bx-menu'></i>
+        </div>
+
+        <!-- Brand Logo -->
+        <div class="brand-logo">
+            <a href="dashboard.php" class="d-flex align-items-center text-white text-decoration-none">
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;">🐾</span>
+                <span class="brand-text">Tierphysio Manager</span>
+            </a>
+        </div>
+
+        <!-- Search Bar (Desktop) -->
+        <div class="search-bar flex-grow-1 d-none d-md-block mx-3">
+            <div class="position-relative">
+                <input type="text" id="globalSearch" class="form-control search-control" 
+                       placeholder="Suche Patient/Besitzer..." autocomplete="off">
+                <span class="position-absolute top-50 translate-middle-y search-icon">
+                    <i class='bx bx-search'></i>
+                </span>
+            </div>
+            <!-- Search Results Dropdown -->
+            <div id="searchResults" class="search-results-dropdown"></div>
+        </div>
+
+        <!-- Right Side Menu -->
+        <div class="top-menu ms-auto">
+            <ul class="navbar-nav align-items-center gap-1">
+                <!-- Mobile Search Icon -->
+                <li class="nav-item d-md-none">
+                    <a class="nav-link text-white" href="javascript:void(0);" onclick="toggleMobileSearch()">
+                        <i class='bx bx-search'></i>
+                    </a>
+                </li>
+                
+                <!-- Theme Toggle -->
                 <li class="nav-item">
-                    <button id="themeToggle" class="theme-toggle btn btn-link nav-link" aria-label="Toggle theme">
+                    <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle theme">
                         <i class="bi bi-moon-fill"></i>
                     </button>
                 </li>
+                
+                <!-- User Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="<?php echo htmlspecialchars($userAvatar); ?>" class="rounded-circle" width="32" height="32" alt="Avatar">
-                        <span><?php echo htmlspecialchars($userName); ?></span>
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white" 
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="<?php echo htmlspecialchars($userAvatar); ?>" 
+                             class="user-img rounded-circle" alt="Avatar" width="36" height="36">
+                        <div class="user-info d-none d-lg-block">
+                            <p class="user-name mb-0"><?php echo htmlspecialchars($userName); ?></p>
+                            <p class="user-role mb-0 small opacity-75"><?php echo htmlspecialchars($userRole); ?></p>
+                        </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li class="px-3 py-2">
-                            <div class="text-muted small"><?php echo htmlspecialchars($userRole); ?></div>
-                            <div class="text-truncate small"><?php echo htmlspecialchars($userEmail); ?></div>
+                            <div class="fw-bold"><?php echo htmlspecialchars($userName); ?></div>
+                            <div class="text-muted small"><?php echo htmlspecialchars($userEmail); ?></div>
                         </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Einstellungen</a></li>
+                        <li><a class="dropdown-item" href="dashboard.php">
+                            <i class='bx bx-home me-2'></i>Dashboard
+                        </a></li>
+                        <li><a class="dropdown-item" href="settings.php">
+                            <i class='bx bx-cog me-2'></i>Einstellungen
+                        </a></li>
+                        <?php if (isset($_SESSION['admin_id'])): ?>
+                        <li><a class="dropdown-item" href="admin/dashboard.php">
+                            <i class='bx bx-shield me-2'></i>Admin Bereich
+                        </a></li>
+                        <?php endif; ?>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Abmelden</a></li>
+                        <li><a class="dropdown-item" href="logout.php">
+                            <i class='bx bx-log-out me-2'></i>Abmelden
+                        </a></li>
                     </ul>
                 </li>
             </ul>
         </div>
-    </div>
-</nav>
-<?php else: ?>
-<!-- Standard Header for Other Pages -->
-<header>
-    <div class="topbar d-flex align-items-center">
-        <nav class="navbar navbar-expand gap-3 w-100">
-            <!-- Mobile Menu Toggle -->
-            <div class="mobile-toggle-menu d-lg-none">
-                <i class='bx bx-menu'></i>
-            </div>
-
-            <!-- Brand (Mobile) -->
-            <div class="d-lg-none">
-                <a class="navbar-brand" href="dashboard.php" style="color: var(--text-primary);">
-                    🐾 Tierphysio
-                </a>
-            </div>
-
-            <!-- Search Bar -->
-            <div class="search-bar flex-grow-1 d-none d-md-block">
-                <div class="position-relative search-bar-box">
-                    <input type="text" id="globalSearch" class="form-control search-control" placeholder="Suche Patient/Besitzer...">
-                    <span class="position-absolute top-50 search-show translate-middle-y">
-                        <i class='bx bx-search'></i>
-                    </span>
-                </div>
-                <!-- Search Results Dropdown -->
-                <div id="searchResults" class="search-results-dropdown"></div>
-            </div>
-
-            <!-- Right Side Menu -->
-            <div class="top-menu ms-auto">
-                <ul class="navbar-nav align-items-center gap-1">
-                    <!-- Mobile Search Icon -->
-                    <li class="nav-item d-md-none">
-                        <a class="nav-link" href="javascript:void(0);" onclick="toggleMobileSearch()">
-                            <i class='bx bx-search'></i>
-                        </a>
-                    </li>
-                    
-                    <!-- Theme Toggle -->
-                    <li class="nav-item">
-                        <button id="theme-toggle" class="theme-toggle-btn" data-theme-toggle aria-label="Toggle theme" title="Design wechseln">
-                            <i class="bi bi-moon-fill"></i>
-                        </button>
-                    </li>
-                    
-                    <!-- Notifications (Optional) -->
-                    <li class="nav-item dropdown d-none">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class='bx bx-bell'></i>
-                            <span class="badge bg-danger rounded-pill">3</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><h6 class="dropdown-header">Benachrichtigungen</h6></li>
-                            <li><a class="dropdown-item" href="#">Neue Termine heute</a></li>
-                            <li><a class="dropdown-item" href="#">Offene Rechnungen</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">Alle anzeigen</a></li>
-                        </ul>
-                    </li>
-                    
-                    <!-- User Menu -->
-                    <li class="nav-item dropdown">
-                        <a class="d-flex align-items-center nav-link dropdown-toggle gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="<?php echo htmlspecialchars($userAvatar); ?>" class="user-img rounded-circle" alt="Avatar" width="40" height="40">
-                            <div class="user-info d-none d-lg-block">
-                                <p class="user-name mb-0"><?php echo htmlspecialchars($userName); ?></p>
-                                <p class="designattion mb-0 small text-muted"><?php echo htmlspecialchars($userRole); ?></p>
-                            </div>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li class="px-3 py-2">
-                                <div class="fw-bold"><?php echo htmlspecialchars($userName); ?></div>
-                                <div class="text-muted small"><?php echo htmlspecialchars($userEmail); ?></div>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="dashboard.php"><i class='bx bx-home me-2'></i>Dashboard</a></li>
-                            <li><a class="dropdown-item" href="settings.php"><i class='bx bx-cog me-2'></i>Einstellungen</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="logout.php"><i class='bx bx-log-out me-2'></i>Abmelden</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </div>
+    </nav>
 </header>
 
 <!-- Mobile Search Overlay -->
 <div id="mobileSearchOverlay" class="mobile-search-overlay">
     <div class="mobile-search-content">
         <button class="close-search" onclick="toggleMobileSearch()">&times;</button>
-        <input type="text" id="mobileSearchInput" class="form-control" placeholder="Suche Patient/Besitzer..." autofocus>
+        <input type="text" id="mobileSearchInput" class="form-control" 
+               placeholder="Suche Patient/Besitzer..." autocomplete="off" autofocus>
         <div id="mobileSearchResults"></div>
     </div>
 </div>
 
 <style>
-.search-results-dropdown {
-    position: absolute;
-    top: 100%;
+/* Violet Gradient Header - Restored Original Design */
+.topbar {
+    background: linear-gradient(135deg, #7C4DFF, #9C27B0);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    z-index: 1030;
+    height: 70px;
+    transition: all 0.3s ease;
+}
+
+/* Adjust for sidebar on desktop */
+@media (min-width: 992px) {
+    .topbar {
+        left: 260px;
+        width: calc(100% - 260px);
+    }
+    
+    .wrapper.toggled .topbar {
+        left: 0;
+        width: 100%;
+    }
+}
+
+/* Brand Logo */
+.brand-logo {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.brand-text {
+    background: linear-gradient(135deg, rgba(255,255,255,1), rgba(255,255,255,0.9));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+/* Search Bar */
+.search-bar {
+    max-width: 500px;
+    position: relative;
+}
+
+.search-control {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.search-control::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.search-control:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    outline: none;
+    color: #fff;
+}
+
+.search-icon {
+    right: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+}
+
+/* Search Results Dropdown */
+.search-results-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid rgba(124, 77, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     max-height: 400px;
     overflow-y: auto;
     display: none;
     z-index: 1000;
-    margin-top: 0.5rem;
+}
+
+[data-theme="dark"] .search-results-dropdown {
+    background: #2a2733;
+    border-color: rgba(156, 39, 176, 0.3);
 }
 
 .search-results-dropdown .result-item {
@@ -178,24 +224,91 @@ $isDashboard = ($currentPage === 'dashboard.php');
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(124, 77, 255, 0.1);
     transition: background 0.2s;
 }
 
-.search-results-dropdown .result-item:last-child {
-    border-bottom: none;
-}
-
 .search-results-dropdown .result-item:hover {
-    background: var(--bg-tertiary);
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.1), rgba(156, 39, 176, 0.1));
 }
 
 .search-results-dropdown .no-results {
     padding: 1rem;
     text-align: center;
-    color: var(--text-muted);
+    color: #6b7280;
 }
 
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.125rem;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1) rotate(15deg);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* User Menu */
+.user-img {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.user-name {
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 0.75rem;
+}
+
+/* Mobile Menu Toggle */
+.mobile-toggle-menu {
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+}
+
+/* Dropdown Styling */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    margin-top: 0.5rem;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background: #2a2733;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.1), rgba(156, 39, 176, 0.1));
+    padding-left: 1.25rem;
+}
+
+/* Mobile Search Overlay */
 .mobile-search-overlay {
     display: none;
     position: fixed;
@@ -203,51 +316,119 @@ $isDashboard = ($currentPage === 'dashboard.php');
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    background: linear-gradient(135deg, rgba(124, 77, 255, 0.95), rgba(156, 39, 176, 0.95));
     z-index: 9999;
     padding: 2rem;
+    backdrop-filter: blur(20px);
 }
 
 .mobile-search-overlay.active {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 10vh;
+    padding-top: 20vh;
 }
 
 .mobile-search-content {
     width: 100%;
     max-width: 500px;
+    position: relative;
 }
 
 .close-search {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: -3rem;
+    right: 0;
     background: none;
     border: none;
     color: white;
-    font-size: 2rem;
+    font-size: 2.5rem;
     cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.close-search:hover {
+    opacity: 1;
 }
 
 .mobile-search-content input {
     width: 100%;
     padding: 1rem;
     font-size: 1.125rem;
-    border-radius: var(--radius-md);
+    border-radius: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.mobile-search-content input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.mobile-search-content input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 #mobileSearchResults {
     margin-top: 1rem;
-    background: var(--card-bg);
-    border-radius: var(--radius-md);
+    background: white;
+    border-radius: 12px;
     max-height: 60vh;
     overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Glass effect animation */
+@keyframes glassShine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.topbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    background-size: 200% 100%;
+    animation: glassShine 8s linear infinite;
+    pointer-events: none;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .topbar {
+    background: linear-gradient(135deg, #5a3a99, #7b1fa2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .search-control {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .search-control:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 </style>
 
 <script>
+// Mobile Search Toggle
 function toggleMobileSearch() {
     const overlay = document.getElementById('mobileSearchOverlay');
     if (overlay) {
@@ -258,25 +439,99 @@ function toggleMobileSearch() {
     }
 }
 
-// Copy search functionality to mobile search
+// Initialize search functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Global search
+    const searchInput = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
     const mobileSearchInput = document.getElementById('mobileSearchInput');
     const mobileSearchResults = document.getElementById('mobileSearchResults');
     
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Search function
+    function performSearch(query, resultsContainer) {
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+        
+        fetch(`api/search.php?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    let html = '';
+                    data.forEach(item => {
+                        const badge = item.type === 'patient' ? 
+                            '<span class="badge bg-primary">Patient</span>' : 
+                            '<span class="badge bg-success">Besitzer</span>';
+                        html += `
+                            <div class="result-item" data-type="${item.type}" data-id="${item.id}">
+                                ${badge}
+                                <span>${item.label}</span>
+                            </div>
+                        `;
+                    });
+                    resultsContainer.innerHTML = html;
+                    resultsContainer.style.display = 'block';
+                    
+                    // Add click handlers
+                    resultsContainer.querySelectorAll('.result-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const type = this.dataset.type;
+                            const id = this.dataset.id;
+                            if (type === 'patient') {
+                                window.location.href = `patient.php?id=${id}`;
+                            } else {
+                                window.location.href = `owner.php?id=${id}`;
+                            }
+                        });
+                    });
+                } else {
+                    resultsContainer.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
+                    resultsContainer.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                resultsContainer.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
+                resultsContainer.style.display = 'block';
+            });
+    }
+    
+    // Debounced search
+    const debouncedSearch = debounce(performSearch, 300);
+    
+    // Desktop search
+    if (searchInput && searchResults) {
+        searchInput.addEventListener('input', function() {
+            debouncedSearch(this.value, searchResults);
+        });
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+    
+    // Mobile search
     if (mobileSearchInput && mobileSearchResults) {
         mobileSearchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            if (query.length < 2) {
-                mobileSearchResults.innerHTML = '';
-                return;
-            }
-            
-            // Reuse the search functionality from main.js
-            if (window.TierphysioApp && window.TierphysioApp.SearchManager) {
-                window.TierphysioApp.SearchManager.performSearch(query, mobileSearchResults);
-            }
+            debouncedSearch(this.value, mobileSearchResults);
         });
     }
 });
 </script>
-<?php endif; ?>
