@@ -28,7 +28,16 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
     <title>KPI Dashboard - Tierphysio Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    
+    <!-- Apply theme immediately to prevent FOUC -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('tierphysio-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -136,13 +145,24 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
             color: #991b1b;
         }
 
-        /* Charts */
+        /* Charts - FIXED HEIGHT CONTAINERS */
         .chart-card {
             background: white;
             border-radius: 16px;
             padding: 1.5rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             margin-bottom: 1.5rem;
+        }
+        
+        /* Fix chart container heights */
+        #revenueChart {
+            max-height: 300px !important;
+            height: 300px !important;
+        }
+        
+        #invoiceChart, #servicesChart {
+            max-height: 200px !important;
+            height: 200px !important;
         }
 
         .chart-title {
@@ -266,30 +286,26 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
             color: #e4e6eb;
         }
 
-        /* Theme toggle */
-        .theme-toggle {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 1000;
+        /* Page wrapper adjustments for sidebar */
+        .page-wrapper {
+            margin-left: 260px;
+            padding-top: 70px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
         }
-
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        
+        .wrapper.toggled .page-wrapper {
+            margin-left: 0;
         }
-
-        body.dark-mode .theme-toggle {
-            background: #374151;
-            color: #fbbf24;
+        
+        @media (max-width: 991px) {
+            .page-wrapper {
+                margin-left: 0;
+            }
+        }
+        
+        .page-content {
+            padding: 2rem;
         }
     </style>
 </head>
@@ -299,36 +315,16 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
         <div class="spinner"></div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-activity me-2"></i>
-                Tierphysio Manager
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-2"></i>
-                            <?= htmlspecialchars($userName) ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Einstellungen</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Abmelden</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container-fluid mt-4">
+    <!-- Include unified header and navigation -->
+    <div class="wrapper">
+        <?php include __DIR__ . '/includes/nav.php'; ?>
+        <?php include __DIR__ . '/includes/header.php'; ?>
+        
+        <!-- Page Wrapper -->
+        <div class="page-wrapper">
+            <!-- Main Content -->
+            <div class="page-content">
+                <div class="container-fluid">
         <?php if ($updateAvailable): ?>
         <!-- Update Notification -->
         <div class="update-notification">
@@ -482,41 +478,30 @@ $updateToVersion = $_SESSION['update_to_version'] ?? null;
                 </div>
             </div>
         </div>
-    </div>
+                </div><!-- End container-fluid -->
+            </div><!-- End page-content -->
+        </div><!-- End page-wrapper -->
+    </div><!-- End wrapper -->
 
     <!-- Footer with Credits -->
     <?php include __DIR__ . '/includes/footer.php'; ?>
 
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" id="themeToggle">
-        <i class="bi bi-moon-fill"></i>
-    </button>
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Load theme script -->
+    <script src="assets/js/theme.js"></script>
     <script>
-        // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        const currentTheme = localStorage.getItem('theme') || 'light';
-
-        if (currentTheme === 'dark') {
-            body.classList.add('dark-mode');
-            themeToggle.innerHTML = '<i class="bi bi-sun-fill"></i>';
-        }
-
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            const isDark = body.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            themeToggle.innerHTML = isDark ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-fill"></i>';
-        });
 
         // Chart configurations
         let revenueChart, invoiceChart, servicesChart;
 
         // Initialize charts
         function initCharts() {
+            // Destroy existing charts to prevent double rendering
+            if (revenueChart) revenueChart.destroy();
+            if (invoiceChart) invoiceChart.destroy();
+            if (servicesChart) servicesChart.destroy();
+            
             // Revenue Chart
             const revenueCtx = document.getElementById('revenueChart').getContext('2d');
             revenueChart = new Chart(revenueCtx, {

@@ -130,6 +130,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // migration_log table might not exist yet
                     }
                     
+                    // Ensure migration_log table exists first
+                    try {
+                        $pdo->exec("CREATE TABLE IF NOT EXISTS migration_log (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            filename VARCHAR(255) NOT NULL,
+                            executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            execution_time FLOAT,
+                            status ENUM('success', 'failed') DEFAULT 'success',
+                            error_message TEXT,
+                            UNIQUE KEY unique_filename (filename)
+                        )");
+                    } catch (Exception $e) {
+                        // Table might already exist, continue
+                    }
+                    
                     // Run each migration
                     foreach ($migrationFiles as $file) {
                         $filename = basename($file);
@@ -204,11 +219,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     if (empty($errors)) {
-                        // Update database version
+                        // Ensure system_info table exists
+                        $pdo->exec("CREATE TABLE IF NOT EXISTS system_info (
+                            key_name VARCHAR(50) PRIMARY KEY,
+                            key_value VARCHAR(255),
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                        )");
+                        
+                        // Update or insert database version
                         $stmt = $pdo->prepare("
-                            UPDATE system_info 
-                            SET key_value = :version, updated_at = NOW() 
-                            WHERE key_name = 'db_version'
+                            INSERT INTO system_info (key_name, key_value, updated_at) 
+                            VALUES ('db_version', :version, NOW())
+                            ON DUPLICATE KEY UPDATE 
+                                key_value = :version,
+                                updated_at = NOW()
                         ");
                         $stmt->execute([':version' => APP_VERSION]);
                         
