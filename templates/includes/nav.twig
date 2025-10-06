@@ -1,2 +1,105 @@
 {# Unified Navigation Component - SSoT Implementation #}
-{% include '/includes/layout/_nav.html' ignore missing %}
+<!-- Single Source of Truth Navigation - DO NOT DUPLICATE -->
+<aside id="sidebar" class="sidebar-wrapper">
+    <!-- Sidebar Header with Violet Gradient -->
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <span style="font-size: 1.75rem;">🐾</span>
+            <span class="logo-text">Tierphysio Manager</span>
+        </div>
+        <div class="toggle-icon ms-auto d-lg-block d-none" id="sidebarToggle">
+            <i class='bx bx-arrow-back'></i>
+        </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar-nav">
+        <ul class="metismenu" id="menu">
+            <li>
+                <a href="/dashboard.php" class="nav-link" data-route="dashboard">
+                    <div class="parent-icon">
+                        <i class='bx bx-home-alt'></i>
+                    </div>
+                    <div class="menu-title">Dashboard</div>
+                </a>
+            </li>
+            <li>
+                <a href="/patients.php" class="nav-link" data-route="patients">
+                    <div class="parent-icon">
+                        <i class='bx bx-group'></i>
+                    </div>
+                    <div class="menu-title">Patienten</div>
+                </a>
+            </li>
+            <li>
+                <a href="/appointments.php" class="nav-link" data-route="appointments">
+                    <div class="parent-icon">
+                        <i class='bx bx-calendar'></i>
+                    </div>
+                    <div class="menu-title">Termine</div>
+                </a>
+            </li>
+            <li>
+                <a href="/notes.php" class="nav-link" data-route="notes">
+                    <div class="parent-icon">
+                        <i class='bx bx-note'></i>
+                    </div>
+                    <div class="menu-title">Notizen</div>
+                </a>
+            </li>
+            <li>
+                <a href="/invoices.php" class="nav-link" data-route="invoices">
+                    <div class="parent-icon">
+                        <i class='bx bx-receipt'></i>
+                    </div>
+                    <div class="menu-title">Rechnungen</div>
+                </a>
+            </li>
+            <li>
+                <a href="/owners.php" class="nav-link" data-route="owners">
+                    <div class="parent-icon">
+                        <i class='bx bx-user'></i>
+                    </div>
+                    <div class="menu-title">Besitzer</div>
+                </a>
+            </li>
+            <li>
+                <a href="/accounting.php" class="nav-link" data-route="accounting">
+                    <div class="parent-icon">
+                        <i class='bx bx-calculator'></i>
+                    </div>
+                    <div class="menu-title">Buchhaltung</div>
+                </a>
+            </li>
+            <li>
+                <a href="/settings.php" class="nav-link" data-route="settings">
+                    <div class="parent-icon">
+                        <i class='bx bx-cog'></i>
+                    </div>
+                    <div class="menu-title">Einstellungen</div>
+                </a>
+            </li>
+            <li id="admin-menu-item" style="display:none;">
+                <a href="/admin/dashboard.php" class="nav-link" data-route="admin">
+                    <div class="parent-icon">
+                        <i class='bx bx-shield'></i>
+                    </div>
+                    <div class="menu-title">Admin Bereich</div>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between p-3 border-top">
+            <small class="text-muted">Version 3.0.0</small>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#changelogModal" class="text-decoration-none">
+                <i class="bi bi-journal-text text-muted"></i>
+            </a>
+        </div>
+    </div>
+</aside>
+
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
