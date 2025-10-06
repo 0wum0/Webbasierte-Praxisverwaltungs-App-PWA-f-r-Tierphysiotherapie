@@ -1,0 +1,94 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2>📝 Notizen</h2>
+
+    {% if errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for e in errors %}
+                <li>{{ e }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if success %}
+        <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    <!-- Formular neue Notiz -->
+    <form method="post" class="bg-dark p-3 rounded shadow mb-4">
+        {{ csrf_field()|raw }}
+        <div class="mb-3">
+            <label class="form-label">Notiz</label>
+            <textarea name="content" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Patient (optional)</label>
+                <select name="patient_id" class="form-select">
+                    <option value="">-- Kein Patient --</option>
+                    {% for p in patients %}
+                        <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Besitzer (optional)</label>
+                <select name="owner_id" class="form-select">
+                    <option value="">-- Kein Besitzer --</option>
+                    {% for o in owners %}
+                        <option value="{{ o.id }}">{{ o.firstname }} {{ o.lastname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success">💾 Notiz speichern</button>
+    </form>
+
+    <!-- Liste aller Notizen -->
+    <div class="card bg-dark text-light shadow-sm">
+        <div class="card-header">📋 Alle Notizen</div>
+        <div class="table-responsive">
+            <table class="table table-dark table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Notiz</th>
+                        <th>Zugeordnet zu</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for n in notes %}
+                    <tr>
+                        <td>{{ n.created_at|date("d.m.Y H:i") }}</td>
+                        <td>{{ n.content }}</td>
+                        <td>
+                            {% if n.patient_name %}
+                                🐾 Patient: {{ n.patient_name }}
+                            {% elseif n.firstname %}
+                                👤 Besitzer: {{ n.firstname }} {{ n.lastname }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="notes.php?delete={{ n.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Notiz wirklich löschen?');">🗑️ Löschen</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Keine Notizen vorhanden</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
