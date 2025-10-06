@@ -350,19 +350,14 @@
 
 			<div class="sidebar-nav">
 				<ul class="metismenu" id="menu">
-					<li><a href="dashboard.php"><div class="parent-icon"><i class='bx bx-home-alt'></i></div><div class="menu-title">Dashboard</div></a></li>
-					<li><a href="patients.php"><div class="parent-icon"><i class='bx bx-group'></i></div><div class="menu-title">Patienten</div></a></li>
-					<li><a href="owners.php"><div class="parent-icon"><i class='bx bx-user'></i></div><div class="menu-title">Besitzer</div></a></li>
-					<li>
-						<a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#newOwnerPatientModal">
-							<div class="parent-icon menu-glow"><i class='bx bx-user-plus'></i></div>
-							<div class="menu-title">Besitzer & Patient</div>
-						</a>
-					</li>
-					<li><a href="appointments.php"><div class="parent-icon"><i class='bx bx-calendar'></i></div><div class="menu-title">Termine</div></a></li>
-					<li><a href="invoices.php"><div class="parent-icon"><i class='bx bx-printer'></i></div><div class="menu-title">Rechnungen</div></a></li>
-					<li><a href="notes.php"><div class="parent-icon"><i class='bx bx-note'></i></div><div class="menu-title">Notizen</div></a></li>
-					<li><a href="settings.php"><div class="parent-icon"><i class='bx bx-cog'></i></div><div class="menu-title">Einstellungen</div></a></li>
+					<li id="nav-dashboard"><a href="dashboard.php"><div class="parent-icon"><i class='bx bx-home-alt'></i></div><div class="menu-title">Dashboard</div></a></li>
+					<li id="nav-patients"><a href="patients.php"><div class="parent-icon"><i class='bx bx-group'></i></div><div class="menu-title">Patienten</div></a></li>
+					<li id="nav-owners"><a href="owners.php"><div class="parent-icon"><i class='bx bx-user'></i></div><div class="menu-title">Besitzer</div></a></li>
+					<li id="nav-owner-patient"><a href="owner_patient.php"><div class="parent-icon"><i class='bx bx-user-plus'></i></div><div class="menu-title">Besitzer & Patient</div></a></li>
+					<li id="nav-appointments"><a href="appointments.php"><div class="parent-icon"><i class='bx bx-calendar'></i></div><div class="menu-title">Termine</div></a></li>
+					<li id="nav-invoices"><a href="invoices.php"><div class="parent-icon"><i class='bx bx-printer'></i></div><div class="menu-title">Rechnungen</div></a></li>
+					<li id="nav-notes"><a href="notes.php"><div class="parent-icon"><i class='bx bx-note'></i></div><div class="menu-title">Notizen</div></a></li>
+					<li id="nav-settings"><a href="settings.php"><div class="parent-icon"><i class='bx bx-cog'></i></div><div class="menu-title">Einstellungen</div></a></li>
 				</ul>
 			</div>
 		</div>
@@ -463,6 +458,33 @@
 	<script src="assets/js/app.js"></script>
 
 	<script>
+	// Active navigation state
+	document.addEventListener("DOMContentLoaded", function() {
+		const currentPath = window.location.pathname.split('/').pop();
+		const navMap = {
+			'dashboard.php': 'nav-dashboard',
+			'patients.php': 'nav-patients',
+			'owners.php': 'nav-owners',
+			'owner_patient.php': 'nav-owner-patient',
+			'appointments.php': 'nav-appointments',
+			'invoices.php': 'nav-invoices',
+			'notes.php': 'nav-notes',
+			'settings.php': 'nav-settings'
+		};
+		
+		const activeNavId = navMap[currentPath];
+		if (activeNavId) {
+			const navItem = document.getElementById(activeNavId);
+			if (navItem) {
+				navItem.classList.add('active');
+				const link = navItem.querySelector('a');
+				if (link) {
+					link.classList.add('active');
+				}
+			}
+		}
+	});
+	
 	// Sidebar Toggle
 	document.addEventListener("DOMContentLoaded", function() {
 		const burger   = document.querySelector(".mobile-toggle-menu");
@@ -670,7 +692,5 @@
 	</script>
 	{% endif %}
 
-	<link href="assets/css/owners_glass.css" rel="stylesheet">
-	{% include "new_owner_patient.twig" %}
 </body>
 </html>

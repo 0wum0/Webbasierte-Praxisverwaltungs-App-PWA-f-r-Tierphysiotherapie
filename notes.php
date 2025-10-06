@@ -3,99 +3,122 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/bootstrap.php';
 $pdo = db();
-
-// Safety check
 if (!$pdo) {
-    die("Database connection unavailable.");
+    throw new RuntimeException('DB connection unavailable');
 }
 
 require_once __DIR__ . '/includes/twig.php';
+require_once __DIR__ . '/includes/csrf.php';
 
-$errors = [];
-$success = null;
+// Initialize variables
+$notes = [];
 $patients = [];
 $owners = [];
-$notes = [];
+$errorMessage = null;
 
-try {
-    // Patienten & Besitzer laden für Dropdown
-    $stmt = $pdo->query("SELECT id, name FROM patients ORDER BY name ASC");
-    $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $stmt = $pdo->query("SELECT id, firstname, lastname FROM owners ORDER BY lastname ASC");
-    $owners = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Neue Notiz speichern
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['content'])) {
-        $content = trim($_POST['content']);
-        $patientId = (int)($_POST['patient_id'] ?? 0);
-        $ownerId = (int)($_POST['owner_id'] ?? 0);
-
-        if ($content === '') {
-            $errors[] = "Bitte einen Notiztext eingeben.";
+// Handle POST request for adding new note
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'create' && csrf_validate($_POST['csrf_token'] ?? '')) {
+        $content = trim($_POST['content'] ?? '');
+        $patient_id = (int)($_POST['patient_id'] ?? 0);
+        $owner_id = (int)($_POST['owner_id'] ?? 0);
+        
+        if (empty($content)) {
+            $errorMessage = "Notiztext ist erforderlich.";
+        } else {
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO notes (patient_id, owner_id, content, sync_status, created_at)
+                    VALUES (:patient_id, :owner_id, :content, 'local', NOW())
+                ");
+                $stmt->execute([
+                    ':patient_id' => $patient_id > 0 ? $patient_id : null,
+                    ':owner_id' => $owner_id > 0 ? $owner_id : null,
+                    ':content' => $content
+                ]);
+                
+                $_SESSION['notify'][] = [
+                    'type' => 'success',
+                    'msg' => '✅ Notiz wurde erfolgreich gespeichert!'
+                ];
+                
+                header('Location: notes.php');
+                exit;
+                
+            } catch (PDOException $e) {
+                if (function_exists('logError')) {
+                    logError('Database error creating note', ['error' => $e->getMessage()]);
+                }
+                $errorMessage = "Datenbankfehler beim Speichern der Notiz.";
+            }
         }
-
-        if (empty($errors)) {
-            $stmt = $pdo->prepare("
-                INSERT INTO notes (patient_id, owner_id, content, sync_status)
-                VALUES (:patient_id, :owner_id, :content, 'local')
-            ");
-            $stmt->execute([
-                ":patient_id" => $patientId ?: null,
-                ":owner_id" => $ownerId ?: null,
-                ":content" => $content
-            ]);
-            $success = "✅ Notiz gespeichert.";
-        }
     }
-
-    // Notiz löschen
-    if (isset($_GET['delete'])) {
-        $id = (int)$_GET['delete'];
-        $stmt = $pdo->prepare("DELETE FROM notes WHERE id = :id");
-        $stmt->execute([":id" => $id]);
-        header("Location: notes.php");
-        exit;
-    }
-
-    // Alle Notizen laden
-    $stmt = $pdo->query("
-        SELECT n.*, 
-               p.name AS patient_name, 
-               o.firstname, o.lastname
-        FROM notes n
-        LEFT JOIN patients p ON n.patient_id = p.id
-        LEFT JOIN owners o ON n.owner_id = o.id
-        ORDER BY n.created_at DESC
-    ");
-    $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-} catch (PDOException $e) {
-    // Log the error
-    if (function_exists('logError')) {
-        logError('Database error in notes.php', ['error' => $e->getMessage()]);
-    }
-    
-    $errors[] = "❌ Datenbankfehler: " . (APP_ENV === 'development' ? $e->getMessage() : 'Bitte kontaktieren Sie den Administrator.');
 }
 
-// Render
+// Load notes list
 try {
-    echo $twig->render("notes.twig", [
-        "title" => "Notizen",
-        "patients" => $patients,
-        "owners" => $owners,
-        "notes" => $notes,
-        "errors" => $errors,
-        "success" => $success
+    $stmt = $pdo->prepare("
+        SELECT n.id, n.content, n.created_at,
+               COALESCE(p.name, '-') AS patient_name,
+               COALESCE(CONCAT_WS(' ', o.firstname, o.lastname), '-') AS owner_name
+        FROM notes n
+        LEFT JOIN patients p ON p.id = n.patient_id
+        LEFT JOIN owners o ON o.id = n.owner_id
+        ORDER BY n.created_at DESC
+        LIMIT 200
+    ");
+    $stmt->execute();
+    $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Load patients for dropdown
+    $stmt = $pdo->prepare("
+        SELECT id, name FROM patients ORDER BY name ASC
+    ");
+    $stmt->execute();
+    $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Load owners for dropdown
+    $stmt = $pdo->prepare("
+        SELECT id, CONCAT_WS(' ', firstname, lastname) AS name
+        FROM owners
+        ORDER BY lastname ASC, firstname ASC
+    ");
+    $stmt->execute();
+    $owners = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    if (function_exists('logError')) {
+        logError('Database error loading notes', ['error' => $e->getMessage()]);
+    }
+    $errorMessage = "Datenbankfehler beim Laden der Notizen.";
+    $notes = [];
+    $patients = [];
+    $owners = [];
+}
+
+// Get notifications from session
+$notifications = $_SESSION['notify'] ?? [];
+unset($_SESSION['notify']);
+
+// Generate CSRF token
+$csrfToken = csrf_token();
+
+// Render template
+try {
+    echo $twig->render('notes_new.twig', [
+        'title' => 'Notizverwaltung',
+        'notes' => $notes,
+        'patients' => $patients,
+        'owners' => $owners,
+        'errorMessage' => $errorMessage,
+        'notifications' => $notifications,
+        'csrf_token' => $csrfToken
     ]);
 } catch (Exception $e) {
-    // Log the error
     if (function_exists('logError')) {
         logError('Template error in notes.php', ['error' => $e->getMessage()]);
     }
     
-    // Display a user-friendly error page
     http_response_code(500);
     echo '<!DOCTYPE html><html><head><title>Fehler</title></head><body>';
     echo '<h1>Ein Fehler ist aufgetreten</h1>';

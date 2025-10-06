@@ -3,129 +3,114 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/bootstrap.php';
 $pdo = db();
-
-// Safety check
 if (!$pdo) {
-    die("Database connection unavailable.");
+    throw new RuntimeException('DB connection unavailable');
 }
 
 require_once __DIR__ . '/includes/twig.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 // Initialize variables
 $owners = [];
-$details = [];
 $errorMessage = null;
+$successMessage = null;
 
-try {
-    // -------------------------------
-    // Besitzer laden (Übersicht)
-    // -------------------------------
-    $stmt = $pdo->query("
-        SELECT o.*,
-               (SELECT COUNT(*) FROM patients p WHERE p.owner_id = o.id) AS patient_count,
-               (SELECT COUNT(*) 
-                  FROM invoices i 
-                  JOIN patients p ON i.patient_id = p.id 
-                 WHERE p.owner_id = o.id) AS invoice_count,
-               (SELECT COUNT(*) 
-                  FROM appointments a 
-                  JOIN patients p ON a.patient_id = p.id 
-                 WHERE p.owner_id = o.id) AS appointment_count,
-               (SELECT COUNT(*) 
-                  FROM invoices i 
-                  JOIN patients p ON i.patient_id = p.id 
-                 WHERE p.owner_id = o.id AND i.status = 'open') AS open_invoices
-        FROM owners o
-        ORDER BY o.lastname ASC, o.firstname ASC
-    ");
-    $owners = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // -------------------------------
-    // Details laden (pro Besitzer)
-    // -------------------------------
-    foreach ($owners as $o) {
-        $oid = (int)$o['id'];
-
-        // Patienten
-        $stmt = $pdo->prepare("SELECT * FROM patients WHERE owner_id = :oid ORDER BY name ASC");
-        $stmt->execute([":oid" => $oid]);
-        $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Rechnungen
-    $stmt = $pdo->prepare("
-        SELECT i.*, p.name AS patient_name
-        FROM invoices i
-        JOIN patients p ON i.patient_id = p.id
-        WHERE p.owner_id = :oid
-        ORDER BY i.id DESC
-    ");
-    $stmt->execute([":oid" => $oid]);
-    $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Termine
-    $stmt = $pdo->prepare("
-        SELECT a.*, p.name AS patient_name
-        FROM appointments a
-        JOIN patients p ON a.patient_id = p.id
-        WHERE p.owner_id = :oid
-        ORDER BY a.appointment_date DESC
-    ");
-    $stmt->execute([":oid" => $oid]);
-    $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Notizen
-    $stmt = $pdo->prepare("SELECT * FROM notes WHERE owner_id = :oid ORDER BY created_at DESC");
-    $stmt->execute([":oid" => $oid]);
-    $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $details[$oid] = [
-            "patients"     => $patients,
-            "invoices"     => $invoices,
-            "appointments" => $appointments,
-            "notes"        => $notes
-        ];
+// Handle POST request for adding new owner
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'create' && csrf_validate($_POST['csrf_token'] ?? '')) {
+        $firstname = trim($_POST['firstname'] ?? '');
+        $lastname = trim($_POST['lastname'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $street = trim($_POST['street'] ?? '');
+        $zip = trim($_POST['zip'] ?? '');
+        $city = trim($_POST['city'] ?? '');
+        
+        if (empty($firstname) || empty($lastname)) {
+            $errorMessage = "Vor- und Nachname sind erforderlich.";
+        } elseif (empty($email) && empty($phone)) {
+            $errorMessage = "Mindestens eine Kontaktmöglichkeit (E-Mail oder Telefon) ist erforderlich.";
+        } else {
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO owners (firstname, lastname, email, phone, street, zip, city, created_at)
+                    VALUES (:firstname, :lastname, :email, :phone, :street, :zip, :city, NOW())
+                ");
+                $stmt->execute([
+                    ':firstname' => $firstname,
+                    ':lastname' => $lastname,
+                    ':email' => $email ?: null,
+                    ':phone' => $phone ?: null,
+                    ':street' => $street ?: null,
+                    ':zip' => $zip ?: null,
+                    ':city' => $city ?: null
+                ]);
+                
+                $_SESSION['notify'][] = [
+                    'type' => 'success',
+                    'msg' => '✅ Besitzer wurde erfolgreich angelegt!'
+                ];
+                
+                // Redirect to prevent form resubmission
+                header('Location: owners.php');
+                exit;
+                
+            } catch (PDOException $e) {
+                if (function_exists('logError')) {
+                    logError('Database error creating owner', ['error' => $e->getMessage()]);
+                }
+                $errorMessage = "Datenbankfehler beim Anlegen des Besitzers.";
+            }
+        }
+    } else {
+        $errorMessage = "Ungültiger Sicherheitstoken. Bitte versuchen Sie es erneut.";
     }
-
-} catch (PDOException $e) {
-    // Log the error
-    if (function_exists('logError')) {
-        logError('Database error in owners.php', ['error' => $e->getMessage()]);
-    }
-    
-    // Store error in session for display
-    $_SESSION['notify'][] = [
-        "type" => "error",
-        "msg"  => "❌ Datenbankfehler: " . (APP_ENV === 'development' ? $e->getMessage() : 'Bitte kontaktieren Sie den Administrator.')
-    ];
-    
-    // Set empty data to prevent template errors
-    $owners = [];
-    $details = [];
 }
 
-// -------------------------------
-// Notifications
-// -------------------------------
+// Load owners list
+try {
+    $stmt = $pdo->prepare("
+        SELECT o.id, CONCAT_WS(' ', o.firstname, o.lastname) AS name,
+               o.email, o.phone,
+               (SELECT COUNT(*) FROM patients p WHERE p.owner_id = o.id) AS patients_count,
+               o.created_at
+        FROM owners o
+        ORDER BY o.created_at DESC
+        LIMIT 200
+    ");
+    $stmt->execute();
+    $owners = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    if (function_exists('logError')) {
+        logError('Database error loading owners', ['error' => $e->getMessage()]);
+    }
+    $errorMessage = "Datenbankfehler beim Laden der Besitzer.";
+    $owners = [];
+}
+
+// Get notifications from session
 $notifications = $_SESSION['notify'] ?? [];
 unset($_SESSION['notify']);
 
-// -------------------------------
-// Render
-// -------------------------------
+// Generate CSRF token
+$csrfToken = csrf_token();
+
+// Render template
 try {
-    echo $twig->render("owners.twig", [
-        "title"        => "Besitzerverwaltung",
-        "owners"       => $owners,
-        "details"      => $details,
-        "notifications"=> $notifications
+    echo $twig->render('owners_new.twig', [
+        'title' => 'Besitzerverwaltung',
+        'owners' => $owners,
+        'errorMessage' => $errorMessage,
+        'successMessage' => $successMessage,
+        'notifications' => $notifications,
+        'csrf_token' => $csrfToken
     ]);
 } catch (Exception $e) {
-    // Log the error
     if (function_exists('logError')) {
         logError('Template error in owners.php', ['error' => $e->getMessage()]);
     }
     
-    // Display a user-friendly error page
     http_response_code(500);
     echo '<!DOCTYPE html><html><head><title>Fehler</title></head><body>';
     echo '<h1>Ein Fehler ist aufgetreten</h1>';

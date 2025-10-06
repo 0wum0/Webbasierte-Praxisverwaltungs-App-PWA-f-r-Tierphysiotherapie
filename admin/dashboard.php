@@ -3,10 +3,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/bootstrap.php';
 $pdo = db();
-
-// Safety check
 if (!$pdo) {
-    die("Database connection unavailable.");
+    throw new RuntimeException('DB connection unavailable');
 }
 
 // Auth Guard
