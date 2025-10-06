@@ -1,135 +1,46 @@
-{% extends "layout.twig" %}
+{% extends "base.twig" %}
+
+{% block title %}Fehler - Tierphysio Manager{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-            <div class="card error-card">
-                <div class="card-body text-center py-5">
-                    <!-- Error Icon -->
-                    <div class="error-icon mb-4">
-                        <i class="bx bx-error-circle"></i>
-                    </div>
-                    
-                    <!-- Error Title -->
-                    <h1 class="error-title mb-3">
-                        {{ errorCode|default('Fehler') }}
-                    </h1>
-                    
-                    <!-- Error Message -->
-                    <h4 class="text-muted mb-4">
-                        {% if errorCode == 404 %}
-                            Seite nicht gefunden
-                        {% elseif errorCode == 403 %}
-                            Zugriff verweigert
-                        {% elseif errorCode == 500 %}
-                            Interner Serverfehler
-                        {% else %}
-                            Ein Fehler ist aufgetreten
-                        {% endif %}
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, #ef4444, #f87171); color: white;">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Ein Fehler ist aufgetreten
                     </h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-x-circle text-danger" style="font-size: 4rem;"></i>
+                    
+                    <h2 class="mt-4 mb-3">{{ error_title|default('Oops! Etwas ist schiefgelaufen') }}</h2>
                     
                     <p class="text-muted mb-4">
-                        {% if errorMessage %}
-                            {{ errorMessage }}
-                        {% else %}
-                            Die angeforderte Seite konnte nicht geladen werden.<br>
-                            Bitte kontaktieren Sie den Administrator, falls das Problem weiterhin besteht.
-                        {% endif %}
+                        {{ error_message|default('Die Seite konnte nicht geladen werden. Bitte kontaktieren Sie den Administrator, wenn das Problem weiterhin besteht.') }}
                     </p>
                     
-                    <!-- Error Details (if in debug mode) -->
-                    {% if errorDetails and debug %}
-                    <div class="alert alert-danger text-start mb-4">
-                        <h6 class="alert-heading">Debug Information:</h6>
-                        <pre class="mb-0">{{ errorDetails }}</pre>
+                    {% if error_code %}
+                    <div class="alert alert-light">
+                        <small>Fehlercode: <strong>{{ error_code }}</strong></small>
                     </div>
                     {% endif %}
                     
-                    <!-- Action Buttons -->
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="javascript:history.back()" class="btn btn-outline-primary">
-                            <i class="bx bx-arrow-back"></i> Zurück
-                        </a>
+                    <div class="mt-4">
                         <a href="/dashboard.php" class="btn btn-primary">
-                            <i class="bx bx-home"></i> Zum Dashboard
+                            <i class="bi bi-house me-2"></i>
+                            Zurück zum Dashboard
                         </a>
+                        <button onclick="window.history.back()" class="btn btn-secondary ms-2">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Zurück
+                        </button>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Help Section -->
-            <div class="text-center mt-4">
-                <p class="text-muted">
-                    Benötigen Sie Hilfe? 
-                    <a href="mailto:support@tierphysio-manager.de" class="text-primary">
-                        Kontaktieren Sie den Support
-                    </a>
-                </p>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-.error-card {
-    margin-top: 3rem;
-    border: none;
-    box-shadow: 0 10px 40px rgba(124, 77, 255, 0.1);
-}
-
-.error-icon {
-    display: inline-block;
-    width: 120px;
-    height: 120px;
-    line-height: 120px;
-    font-size: 4rem;
-    color: #ef4444;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(248, 113, 113, 0.1));
-    border-radius: 50%;
-}
-
-.error-title {
-    color: var(--text-primary);
-    font-weight: 700;
-}
-
-.error-card .card-body {
-    padding: 3rem 2rem;
-}
-
-/* Animation */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-
-.error-icon {
-    animation: shake 0.5s ease-in-out;
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .error-card {
-    background: var(--bg-secondary);
-}
-
-[data-theme="dark"] .error-icon {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(248, 113, 113, 0.2));
-}
-
-/* Responsive */
-@media (max-width: 576px) {
-    .error-icon {
-        width: 80px;
-        height: 80px;
-        line-height: 80px;
-        font-size: 3rem;
-    }
-    
-    .error-title {
-        font-size: 1.5rem;
-    }
-}
-</style>
 {% endblock %}

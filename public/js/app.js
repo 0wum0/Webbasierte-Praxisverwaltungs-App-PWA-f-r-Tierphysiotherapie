@@ -1,18 +1,95 @@
 /**
  * Tierphysio Manager - Main Application JavaScript
- * Fixed version without UI glitches
+ * Fixed version without UI glitches, animations, and overlays
  * @version 3.0.0
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
+    // ===== KILL ALL PROBLEMATIC ANIMATIONS & OVERLAYS =====
+    // Stop any rogue intervals/animations that might move header controls
+    (function killProblematicAnimations() {
+        // Override setInterval to prevent header animations
+        const origSetInterval = window.setInterval;
+        window.setInterval = function(fn, t) {
+            const fnStr = fn && fn.toString();
+            // Block any intervals that might animate header elements
+            if (fnStr && /move|slide|animate|translateX|header|topbar|search-bar|top-menu/i.test(fnStr)) {
+                console.warn('Blocked problematic animation interval');
+                return 0;
+            }
+            return origSetInterval(fn, t);
+        };
+
+        // Clear any existing intervals that might be problematic
+        const highestId = window.setTimeout(function() {
+            for (let i = highestId; i >= 0; i--) {
+                window.clearInterval(i);
+            }
+        }, 0);
+
+        // Remove all overlays that might block clicks
+        document.querySelectorAll('.decor-overlay, .gradient-banner, [data-overlay], .header-overlay, .hero-banner').forEach(el => {
+            el.style.pointerEvents = 'none';
+            el.style.zIndex = '0';
+            el.remove(); // Remove them entirely
+        });
+
+        // Ensure header is always on top and clickable
+        const headers = document.querySelectorAll('.topbar, header');
+        headers.forEach((header, index) => {
+            if (index === 0) {
+                // Keep only first header
+                header.style.zIndex = '1030';
+                header.style.pointerEvents = 'auto';
+                header.style.position = 'fixed';
+            } else {
+                // Remove duplicate headers
+                header.remove();
+            }
+        });
+
+        // Remove transform/animation styles from header elements
+        document.querySelectorAll('.search-bar, .top-menu, .theme-toggle-btn, .actions').forEach(el => {
+            el.style.transform = 'none';
+            el.style.animation = 'none';
+            el.style.position = 'static';
+        });
+    })();
+
     // ===== Sidebar Toggle Functionality =====
     const sidebar = document.querySelector('.sidebar-wrapper');
     const overlay = document.querySelector('.sidebar-overlay');
+    const burgerBtn = document.getElementById('burgerBtn');
     const toggleBtn = document.querySelector('.mobile-toggle-menu');
     const collapseBtn = document.querySelector('.toggle-icon');
     const wrapper = document.querySelector('.wrapper');
+    
+    // Burger button handler
+    if (burgerBtn) {
+        burgerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isDesktop = window.innerWidth >= 992;
+            
+            if (isDesktop) {
+                // Desktop: Toggle wrapper class
+                if (wrapper) {
+                    wrapper.classList.toggle('toggled');
+                }
+            } else {
+                // Mobile: Toggle sidebar and overlay
+                if (sidebar) {
+                    sidebar.classList.toggle('active');
+                }
+                if (overlay) {
+                    overlay.classList.toggle('active');
+                }
+            }
+        });
+    }
     
     // Mobile toggle
     if (toggleBtn) {
@@ -58,19 +135,75 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.classList.remove('active');
         });
     }
+
+    // ===== Search Functionality =====
+    const searchBtn = document.getElementById('searchBtn');
+    const searchOverlay = document.getElementById('searchOverlay');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
     
-    // Handle window resize
-    window.addEventListener('resize', function() {
-        const isDesktop = window.innerWidth >= 992;
-        
-        if (isDesktop && sidebar) {
-            // Remove mobile classes on desktop
-            sidebar.classList.remove('active');
-            if (overlay) {
-                overlay.classList.remove('active');
+    if (searchBtn && searchOverlay) {
+        searchBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            searchOverlay.style.display = 'flex';
+            searchOverlay.classList.add('active');
+            if (searchInput) {
+                searchInput.focus();
             }
+        });
+    }
+
+    // Close search
+    window.closeSearch = function() {
+        if (searchOverlay) {
+            searchOverlay.style.display = 'none';
+            searchOverlay.classList.remove('active');
         }
-    });
+    };
+
+    // Search functionality
+    if (searchInput && searchResults) {
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/api/search.php?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            let html = '';
+                            data.forEach(item => {
+                                const badge = item.type === 'patient' ? 
+                                    '<span class="badge bg-primary">Patient</span>' : 
+                                    '<span class="badge bg-success">Besitzer</span>';
+                                html += `
+                                    <div class="result-item" onclick="window.location.href='${item.type === 'patient' ? 'patient' : 'owner'}.php?id=${item.id}'">
+                                        ${badge}
+                                        <span>${item.label}</span>
+                                    </div>
+                                `;
+                            });
+                            searchResults.innerHTML = html;
+                        } else {
+                            searchResults.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Search error:', error);
+                        searchResults.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
+                    });
+            }, 300);
+        });
+    }
 
     // ===== Back to Top Button =====
     const backToTopBtn = document.querySelector('.back-to-top');
@@ -92,13 +225,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== Initialize Tooltips =====
+    // ===== Fix Modal Z-Index Issues =====
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        modal.addEventListener('show.bs.modal', function() {
+            // Ensure modal and backdrop have correct z-index
+            setTimeout(function() {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.zIndex = '1040';
+                }
+                modal.style.zIndex = '1050';
+                const dialog = modal.querySelector('.modal-dialog');
+                if (dialog) {
+                    dialog.style.zIndex = '1060';
+                }
+            }, 10);
+        });
+    });
+
+    // ===== Initialize Bootstrap Components =====
+    // Tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function(tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // ===== Initialize Popovers =====
+    // Popovers
     const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     popoverTriggerList.forEach(function(popoverTriggerEl) {
         new bootstrap.Popover(popoverTriggerEl);
@@ -127,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== Active Navigation Highlighting =====
     const currentPath = window.location.pathname.split('/').pop() || 'dashboard.php';
-    const navLinks = document.querySelectorAll('.metismenu li a');
+    const navLinks = document.querySelectorAll('.metismenu li a, .main-nav a');
     
     navLinks.forEach(function(link) {
         const href = link.getAttribute('href');
@@ -139,109 +291,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
-    // ===== Password Strength Indicator =====
-    const passwordInput = document.getElementById('password');
-    if (passwordInput) {
-        passwordInput.addEventListener('keyup', function() {
-            const strength = checkPasswordStrength(this.value);
-            const indicator = document.getElementById('password-strength');
-            
-            if (indicator) {
-                indicator.className = 'password-strength';
-                indicator.classList.add(strength);
-                
-                const labels = {
-                    'weak': 'Schwach',
-                    'medium': 'Mittel',
-                    'strong': 'Stark'
-                };
-                indicator.textContent = labels[strength] || '';
-            }
-        });
-    }
-    
-    function checkPasswordStrength(password) {
-        let strength = 'weak';
-        
-        if (password.length >= 8) {
-            strength = 'medium';
-        }
-        
-        if (password.length >= 12 && 
-            /[A-Z]/.test(password) && 
-            /[a-z]/.test(password) && 
-            /[0-9]/.test(password) && 
-            /[^A-Za-z0-9]/.test(password)) {
-            strength = 'strong';
-        }
-        
-        return strength;
-    }
-
-    // ===== Smooth Scroll for Anchor Links =====
-    const anchorLinks = document.querySelectorAll('a[href^="#"]:not([data-bs-toggle])');
-    anchorLinks.forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            const targetId = this.getAttribute('href');
-            if (targetId && targetId !== '#') {
-                const target = document.querySelector(targetId);
-                if (target) {
-                    e.preventDefault();
-                    const offset = 100;
-                    const targetPosition = target.getBoundingClientRect().top + window.scrollY - offset;
-                    
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
-                    });
-                }
-            }
-        });
-    });
-
-    // ===== Fix Modal Z-Index Issues =====
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(function(modal) {
-        modal.addEventListener('show.bs.modal', function() {
-            // Ensure modal backdrop is at correct z-index
-            setTimeout(function() {
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) {
-                    backdrop.style.zIndex = '1040';
-                }
-                modal.style.zIndex = '1050';
-                const dialog = modal.querySelector('.modal-dialog');
-                if (dialog) {
-                    dialog.style.zIndex = '1060';
-                }
-            }, 10);
-        });
-    });
-
-    // ===== Prevent Menu/Search Animation Glitches =====
-    // Remove any periodic animations
-    const topMenu = document.querySelector('.top-menu');
-    const searchBar = document.querySelector('.search-bar');
-    
-    if (topMenu) {
-        // Remove any transform or animation styles
-        topMenu.style.transform = 'none';
-        topMenu.style.animation = 'none';
-    }
-    
-    if (searchBar) {
-        // Remove any transform or animation styles
-        searchBar.style.transform = 'none';
-        searchBar.style.animation = 'none';
-    }
-    
-    // Clear any animation intervals that might exist
-    const highestId = window.setTimeout(function() {
-        for (let i = highestId; i >= 0; i--) {
-            window.clearInterval(i);
-        }
-    }, 0);
 
     // ===== Initialize MetisMenu if available =====
     if (typeof $ !== 'undefined' && $.fn.metisMenu) {
@@ -272,104 +321,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-});
-
-// ===== Global Search Functionality =====
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('globalSearch');
-    const searchResults = document.getElementById('searchResults');
-    const mobileSearchInput = document.getElementById('mobileSearchInput');
-    const mobileSearchResults = document.getElementById('mobileSearchResults');
-    
-    // Debounce function
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-    
-    // Search function
-    function performSearch(query, resultsContainer) {
-        if (!resultsContainer) return;
+    // ===== Handle window resize =====
+    window.addEventListener('resize', function() {
+        const isDesktop = window.innerWidth >= 992;
         
-        if (query.length < 2) {
-            resultsContainer.style.display = 'none';
-            resultsContainer.innerHTML = '';
-            return;
-        }
-        
-        fetch(`api/search.php?q=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                    let html = '';
-                    data.forEach(item => {
-                        const badge = item.type === 'patient' ? 
-                            '<span class="badge bg-primary">Patient</span>' : 
-                            '<span class="badge bg-success">Besitzer</span>';
-                        html += `
-                            <div class="result-item" data-type="${item.type}" data-id="${item.id}">
-                                ${badge}
-                                <span>${item.label}</span>
-                            </div>
-                        `;
-                    });
-                    resultsContainer.innerHTML = html;
-                    resultsContainer.style.display = 'block';
-                    
-                    // Add click handlers
-                    resultsContainer.querySelectorAll('.result-item').forEach(item => {
-                        item.addEventListener('click', function() {
-                            const type = this.dataset.type;
-                            const id = this.dataset.id;
-                            if (type === 'patient') {
-                                window.location.href = `patient.php?id=${id}`;
-                            } else {
-                                window.location.href = `owner.php?id=${id}`;
-                            }
-                        });
-                    });
-                } else {
-                    resultsContainer.innerHTML = '<div class="no-results">Keine Ergebnisse gefunden</div>';
-                    resultsContainer.style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Search error:', error);
-                resultsContainer.innerHTML = '<div class="no-results">Fehler bei der Suche</div>';
-                resultsContainer.style.display = 'block';
-            });
-    }
-    
-    // Debounced search
-    const debouncedSearch = debounce(performSearch, 300);
-    
-    // Desktop search
-    if (searchInput && searchResults) {
-        searchInput.addEventListener('input', function() {
-            debouncedSearch(this.value.trim(), searchResults);
-        });
-        
-        // Hide results when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
+        if (isDesktop && sidebar) {
+            // Remove mobile classes on desktop
+            sidebar.classList.remove('active');
+            if (overlay) {
+                overlay.classList.remove('active');
             }
-        });
-    }
-    
-    // Mobile search
-    if (mobileSearchInput && mobileSearchResults) {
-        mobileSearchInput.addEventListener('input', function() {
-            debouncedSearch(this.value.trim(), mobileSearchResults);
-        });
-    }
+        }
+    });
 });
 
 // ===== Mobile Search Toggle =====
