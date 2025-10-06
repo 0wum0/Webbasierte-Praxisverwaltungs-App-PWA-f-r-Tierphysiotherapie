@@ -214,8 +214,48 @@ register_shutdown_function(function() {
 // Installation und Login Guards
 // ============================================================================
 
+/**
+ * Check installation status and redirect if needed
+ */
+function checkInstallStatus() {
+    $installLock = __DIR__ . '/install.lock';
+    $configFile = __DIR__ . '/config.php';
+    
+    // System not installed - redirect to installer
+    if (!file_exists($installLock)) {
+        header('Location: /install/install.php');
+        exit;
+    }
+    
+    // Check for updates
+    if (file_exists($configFile)) {
+        try {
+            require_once __DIR__ . '/version.php';
+            require_once $configFile;
+            require_once __DIR__ . '/db.php';
+            
+            global $pdo;
+            
+            // Check database version
+            $stmt = $pdo->prepare("SELECT key_value FROM system_info WHERE key_name = 'db_version'");
+            $stmt->execute();
+            $dbVersion = $stmt->fetchColumn() ?: '0.0.0';
+            
+            // If update available, suggest update
+            if (isUpdateAvailable($dbVersion)) {
+                // Set session flag for update notification
+                $_SESSION['update_available'] = true;
+                $_SESSION['update_from_version'] = $dbVersion;
+                $_SESSION['update_to_version'] = APP_VERSION;
+            }
+        } catch (Exception $e) {
+            // Silently ignore version check errors
+        }
+    }
+}
+
 // WICHTIG: Lock-Datei jetzt im includes-Ordner (install-Ordner kann gelöscht werden)
-$installLock = __DIR__ . '/installed.lock';
+$installLock = __DIR__ . '/install.lock';
 
 // Aktuelle Request-Informationen ermitteln
 $currentScript = $_SERVER['SCRIPT_NAME'] ?? '';
