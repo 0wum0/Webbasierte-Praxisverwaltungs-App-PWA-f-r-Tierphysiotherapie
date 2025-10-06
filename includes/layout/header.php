@@ -1,6 +1,6 @@
 <?php
 /**
- * Unified Header Component - Rounded Violet Gradient Design
+ * Unified Header Component - Elegant Header Design
  * Single header implementation without duplication
  * @package TierphysioManager
  * @version 3.0.0
@@ -21,64 +21,32 @@ $userAvatar = $_SESSION['user_avatar'] ?? 'assets/img/avatar.png';
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
-<!-- Unified Rounded Violet Gradient Header (Global) -->
-<header class="topbar rounded-header" style="z-index: 1030 !important; position: relative !important;">
-    <div class="d-flex align-items-center justify-content-between w-100">
-        <!-- Left: Burger Menu -->
-        <button class="btn-icon" id="burgerBtn" aria-label="Menü" style="pointer-events: auto !important;">
-            <i class='bx bx-menu'></i>
-        </button>
+<!-- Include header styles for PHP files that don't use main.css -->
+<style>
+<?php include __DIR__ . '/header-styles.css'; ?>
+</style>
 
-        <!-- Center: Brand (Desktop only) -->
-        <div class="brand-logo d-none d-lg-flex align-items-center">
-            <a href="dashboard.php" class="d-flex align-items-center text-white text-decoration-none">
-                <span style="font-size: 1.5rem; margin-right: 0.5rem;">🐾</span>
-                <span class="brand-text">Tierphysio Manager</span>
-            </a>
-        </div>
-
-        <!-- Right: Actions -->
-        <div class="actions d-flex align-items-center gap-2">
-            <!-- Search Button -->
-            <button class="btn-icon" id="searchBtn" aria-label="Suche" style="pointer-events: auto !important;">
-                <i class='bx bx-search'></i>
-            </button>
-            
-            <!-- Theme Toggle -->
-            <button class="btn-icon" id="themeToggle" aria-label="Theme" style="pointer-events: auto !important;">
-                <i id="themeIcon" class="bi bi-moon-fill"></i>
-            </button>
-            
-            <!-- User Menu -->
-            <div class="dropdown">
-                <button class="btn-icon dropdown-toggle" id="userMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" style="pointer-events: auto !important;">
-                    <img src="<?php echo htmlspecialchars($userAvatar); ?>" width="28" height="28" class="rounded-circle" alt="User">
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li class="px-3 py-2">
-                        <div class="fw-bold"><?php echo htmlspecialchars($userName); ?></div>
-                        <div class="text-muted small"><?php echo htmlspecialchars($userEmail); ?></div>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="dashboard.php">
-                        <i class='bx bx-home me-2'></i>Dashboard
-                    </a></li>
-                    <li><a class="dropdown-item" href="settings.php">
-                        <i class='bx bx-cog me-2'></i>Einstellungen
-                    </a></li>
-                    <?php if (isset($_SESSION['admin_id'])): ?>
-                    <li><a class="dropdown-item" href="admin/dashboard.php">
-                        <i class='bx bx-shield me-2'></i>Admin Bereich
-                    </a></li>
-                    <?php endif; ?>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="logout.php">
-                        <i class='bx bx-log-out me-2'></i>Abmelden
-                    </a></li>
-                </ul>
-            </div>
-        </div>
+<header class="app-header">
+  <div class="header-left">
+    <button class="menu-toggle" id="menuToggle">
+      <i class="bi bi-list"></i>
+    </button>
+    <h1 class="app-title">Tierphysio Praxis</h1>
+  </div>
+  <div class="header-right">
+    <div class="dropdown user-dropdown">
+      <button class="dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="/public/img/user.png" alt="User" class="user-avatar">
+        <span class="username"><?php echo htmlspecialchars($userName ?? 'Eileen Wenzel'); ?></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+        <li><a class="dropdown-item" href="/profile.php"><i class="bi bi-person"></i> Profil</a></li>
+        <li><a class="dropdown-item" href="/settings.php"><i class="bi bi-gear"></i> Einstellungen</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="/logout.php"><i class="bi bi-box-arrow-right"></i> Abmelden</a></li>
+      </ul>
     </div>
+  </div>
 </header>
 
 <!-- Search Overlay -->

@@ -94,26 +94,7 @@
             min-height: 100vh;
         }
         
-        /* Page wrapper for content */
-        .page-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-left: 260px;
-            padding-top: 70px;
-            transition: margin-left 0.3s ease;
-            min-height: 100vh;
-        }
-        
-        .wrapper.toggled .page-wrapper {
-            margin-left: 0;
-        }
-        
-        @media (max-width: 991px) {
-            .page-wrapper {
-                margin-left: 0;
-            }
-        }
+        /* Page wrapper for content - using main.css styles */
         
         .page-content {
             flex: 1;
@@ -241,10 +222,10 @@
     <div class="wrapper">
         
         <!-- Include Navigation Sidebar -->
-        {% include '../includes/layout/nav.php' %}
+        {% include 'includes/nav.twig' %}
         
         <!-- Include Header -->
-        {% include '../includes/layout/header.php' %}
+        {% include 'includes/header.twig' %}
         
         <!-- Page Wrapper -->
         <div class="page-wrapper">
@@ -260,7 +241,7 @@
     <!-- End Wrapper -->
     
     <!-- Footer (Scrollable) -->
-    {% include '../includes/layout/footer.php' %}
+    {% include 'includes/footer.twig' %}
     
     <!-- Back to top button is included in footer.php -->
     
