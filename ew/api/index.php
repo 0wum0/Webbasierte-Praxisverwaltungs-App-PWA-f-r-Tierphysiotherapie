@@ -5,6 +5,15 @@
  */
 
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/config.php';
+
+// Check authentication if required
+if (API_REQUIRE_AUTH) {
+    session_start();
+    if (!isset($_SESSION['user_id'])) {
+        json_fail('Nicht autorisiert', 401);
+    }
+}
 
 // Get action from request
 $action = $_GET['action'] ?? $_POST['action'] ?? null;

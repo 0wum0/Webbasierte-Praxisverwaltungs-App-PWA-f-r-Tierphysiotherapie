@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test - Tierphysio Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/public/css/main.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        .api-response {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        .status-success { background: #48bb78; }
+        .status-error { background: #f56565; }
+        .status-loading { background: #ed8936; animation: pulse 1s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-card">
+            <h1>🔍 Dashboard API Test</h1>
+            <p class="text-muted">Testet die API-Endpoints und Dashboard-Funktionalität</p>
+        </div>
+
+        <!-- API Health Check -->
+        <div class="test-card">
+            <h3>API Health Check</h3>
+            <div class="mb-3">
+                <button class="btn btn-primary" onclick="testHealthCheck()">Test Health Endpoint</button>
+                <span id="health-status"></span>
+            </div>
+            <div class="api-response" id="health-response"></div>
+        </div>
+
+        <!-- Dashboard Metrics -->
+        <div class="test-card">
+            <h3>Dashboard Metrics</h3>
+            <div class="mb-3">
+                <button class="btn btn-primary" onclick="testDashboardMetrics()">Test Dashboard Metrics</button>
+                <span id="metrics-status"></span>
+            </div>
+            <div class="api-response" id="metrics-response"></div>
+        </div>
+
+        <!-- Search Test -->
+        <div class="test-card">
+            <h3>Search API</h3>
+            <div class="mb-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="search-query" placeholder="Suchbegriff eingeben...">
+                    <button class="btn btn-primary" onclick="testSearch()">Suchen</button>
+                </div>
+                <span id="search-status"></span>
+            </div>
+            <div class="api-response" id="search-response"></div>
+        </div>
+
+        <!-- Create Owner Test -->
+        <div class="test-card">
+            <h3>Create Owner (Dev Mode Test)</h3>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" class="form-control mb-2" id="owner-firstname" placeholder="Vorname">
+                </div>
+                <div class="col-md-6">
+                    <input type="text" class="form-control mb-2" id="owner-lastname" placeholder="Nachname">
+                </div>
+            </div>
+            <div class="mb-3">
+                <button class="btn btn-success" onclick="testCreateOwner()">Owner erstellen (Dev Mode)</button>
+                <span id="owner-status"></span>
+            </div>
+            <div class="api-response" id="owner-response"></div>
+        </div>
+
+        <!-- Modal Test -->
+        <div class="test-card">
+            <h3>Modal & Toast Tests</h3>
+            <button class="btn btn-info" onclick="showTestModal()">Test Modal</button>
+            <button class="btn btn-warning" onclick="showTestToast('success')">Success Toast</button>
+            <button class="btn btn-danger" onclick="showTestToast('error')">Error Toast</button>
+        </div>
+    </div>
+
+    <!-- Test Modal -->
+    <div class="modal fade" id="testModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Dies ist ein Test-Modal mit Glassmorphism-Design.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+                    <button type="button" class="btn btn-primary">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" id="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Base URL configuration
+        const API_BASE = 'https://ew.makeit.uno/api';
+        
+        // Status indicator helper
+        function setStatus(elementId, status, text = '') {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            let className = 'status-loading';
+            if (status === 'success') className = 'status-success';
+            if (status === 'error') className = 'status-error';
+            
+            element.innerHTML = `<span class="status-indicator ${className}"></span>${text}`;
+        }
+        
+        // API fetch helper
+        async function apiRequest(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const text = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error('Invalid JSON:', text);
+                    throw new Error('Invalid JSON response');
+                }
+                
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                console.error('API Error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Test functions
+        async function testHealthCheck() {
+            setStatus('health-status', 'loading', 'Testing...');
+            const result = await apiRequest('/health.php');
+            
+            if (result.success) {
+                setStatus('health-status', 'success', 'OK');
+                document.getElementById('health-response').textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                setStatus('health-status', 'error', 'Failed');
+                document.getElementById('health-response').textContent = result.error || 'Unknown error';
+            }
+        }
+        
+        async function testDashboardMetrics() {
+            setStatus('metrics-status', 'loading', 'Loading...');
+            const result = await apiRequest('/index.php?action=dashboard_metrics&dev_mode=1');
+            
+            if (result.success) {
+                setStatus('metrics-status', 'success', 'OK');
+                document.getElementById('metrics-response').textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                setStatus('metrics-status', 'error', `Failed (${result.status})`);
+                document.getElementById('metrics-response').textContent = JSON.stringify(result.data || result.error, null, 2);
+            }
+        }
+        
+        async function testSearch() {
+            const query = document.getElementById('search-query').value;
+            if (!query) {
+                showTestToast('error', 'Bitte Suchbegriff eingeben');
+                return;
+            }
+            
+            setStatus('search-status', 'loading', 'Searching...');
+            const result = await apiRequest(`/index.php?action=search&q=${encodeURIComponent(query)}&dev_mode=1`);
+            
+            if (result.success) {
+                setStatus('search-status', 'success', `${result.data.length || 0} Ergebnisse`);
+                document.getElementById('search-response').textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                setStatus('search-status', 'error', 'Failed');
+                document.getElementById('search-response').textContent = JSON.stringify(result.data || result.error, null, 2);
+            }
+        }
+        
+        async function testCreateOwner() {
+            const firstname = document.getElementById('owner-firstname').value;
+            const lastname = document.getElementById('owner-lastname').value;
+            
+            if (!firstname || !lastname) {
+                showTestToast('error', 'Bitte alle Felder ausfüllen');
+                return;
+            }
+            
+            setStatus('owner-status', 'loading', 'Creating...');
+            const result = await apiRequest('/index.php?action=owner_create&dev_mode=1', {
+                method: 'POST',
+                body: JSON.stringify({
+                    first_name: firstname,
+                    last_name: lastname,
+                    email: `${firstname.toLowerCase()}.${lastname.toLowerCase()}@test.de`,
+                    phone: '0123456789'
+                })
+            });
+            
+            if (result.success) {
+                setStatus('owner-status', 'success', 'Created');
+                document.getElementById('owner-response').textContent = JSON.stringify(result.data, null, 2);
+                showTestToast('success', 'Owner erfolgreich erstellt!');
+            } else {
+                setStatus('owner-status', 'error', 'Failed');
+                document.getElementById('owner-response').textContent = JSON.stringify(result.data || result.error, null, 2);
+                showTestToast('error', result.data?.error?.message || 'Fehler beim Erstellen');
+            }
+        }
+        
+        function showTestModal() {
+            const modal = new bootstrap.Modal(document.getElementById('testModal'));
+            modal.show();
+        }
+        
+        function showTestToast(type, message = '') {
+            if (!message) {
+                message = type === 'success' ? 'Operation erfolgreich!' : 'Ein Fehler ist aufgetreten!';
+            }
+            
+            const toastHtml = `
+                <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            const container = document.getElementById('toast-container');
+            const toastElement = document.createElement('div');
+            toastElement.innerHTML = toastHtml;
+            container.appendChild(toastElement.firstElementChild);
+            
+            const toast = new bootstrap.Toast(container.lastElementChild);
+            toast.show();
+        }
+        
+        // Auto-run health check on load
+        window.addEventListener('DOMContentLoaded', () => {
+            testHealthCheck();
+        });
+    </script>
+</body>
+</html>
