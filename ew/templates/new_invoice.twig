@@ -1,0 +1,39 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+  <div class="breadcrumb-title pe-3">Rechnung</div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="mb-3">➕ Neue Rechnung</h4>
+
+    <form method="post">
+        {{ csrf_field()|raw }}
+      <div class="mb-3">
+        <label for="patient" class="form-label">Patient auswählen</label>
+        <select class="form-select" id="patient" name="patient_id" required>
+          <option value="">-- bitte wählen --</option>
+          {% for p in patients %}
+            <option value="{{ p.id }}">{{ p.name }} ({{ p.firstname }} {{ p.lastname }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="amount" class="form-label">Betrag (€)</label>
+        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="description" class="form-label">Beschreibung</label>
+        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">💾 Speichern</button>
+      <a href="invoices.php" class="btn btn-secondary">↩️ Zurück</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

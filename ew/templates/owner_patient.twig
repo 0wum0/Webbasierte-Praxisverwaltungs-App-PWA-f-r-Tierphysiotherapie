@@ -1,0 +1,261 @@
+{% extends 'base.twig' %}
+
+{% block content %}
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+    <div class="ps-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 p-0">
+                <li class="breadcrumb-item"><a href="dashboard.php"><i class="bx bx-home-alt"></i></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Besitzer & Patient hinzufügen</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <h6 class="mb-0 text-uppercase">Besitzer & Patient kombiniert erfassen</h6>
+        <hr/>
+        
+        {% if errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Fehler:</strong>
+                <ul class="mb-0">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+        
+        {% if success %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ success }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+        
+        <form method="POST" action="owner_patient.php" class="needs-validation" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            
+            <div class="row g-3">
+                <!-- Owner Section -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="bx bx-user me-2"></i>Besitzer anlegen
+                            </h5>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="owner_firstname" class="form-label">Vorname *</label>
+                                    <input type="text" class="form-control" id="owner_firstname" name="owner_firstname" 
+                                           value="{{ form_data.owner_firstname|default('') }}" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen Vornamen ein.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="owner_lastname" class="form-label">Nachname *</label>
+                                    <input type="text" class="form-control" id="owner_lastname" name="owner_lastname" 
+                                           value="{{ form_data.owner_lastname|default('') }}" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen Nachnamen ein.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="owner_email" class="form-label">E-Mail</label>
+                                    <input type="email" class="form-control" id="owner_email" name="owner_email" 
+                                           value="{{ form_data.owner_email|default('') }}">
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie eine gültige E-Mail-Adresse ein.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="owner_phone" class="form-label">Telefon</label>
+                                    <input type="tel" class="form-control" id="owner_phone" name="owner_phone" 
+                                           value="{{ form_data.owner_phone|default('') }}">
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="owner_street" class="form-label">Straße & Hausnummer</label>
+                                    <input type="text" class="form-control" id="owner_street" name="owner_street" 
+                                           value="{{ form_data.owner_street|default('') }}">
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label for="owner_zip" class="form-label">PLZ</label>
+                                    <input type="text" class="form-control" id="owner_zip" name="owner_zip" 
+                                           value="{{ form_data.owner_zip|default('') }}" maxlength="10">
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <label for="owner_city" class="form-label">Stadt</label>
+                                    <input type="text" class="form-control" id="owner_city" name="owner_city" 
+                                           value="{{ form_data.owner_city|default('') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Patient Section -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="bx bx-heart me-2"></i>Patient anlegen
+                            </h5>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="patient_name" class="form-label">Name *</label>
+                                    <input type="text" class="form-control" id="patient_name" name="patient_name" 
+                                           value="{{ form_data.patient_name|default('') }}" required>
+                                    <div class="invalid-feedback">
+                                        Bitte geben Sie einen Namen ein.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="patient_species" class="form-label">Tierart *</label>
+                                    <select class="form-select" id="patient_species" name="patient_species" required>
+                                        <option value="">Bitte wählen...</option>
+                                        {% for s in species %}
+                                            <option value="{{ s }}" {% if form_data.patient_species|default('') == s %}selected{% endif %}>
+                                                {{ s }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Bitte wählen Sie eine Tierart.
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="patient_breed" class="form-label">Rasse</label>
+                                    <input type="text" class="form-control" id="patient_breed" name="patient_breed" 
+                                           value="{{ form_data.patient_breed|default('') }}">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="patient_age" class="form-label">Alter (Jahre)</label>
+                                    <input type="number" class="form-control" id="patient_age" name="patient_age" 
+                                           value="{{ form_data.patient_age|default('') }}" min="0" max="50">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="patient_weight" class="form-label">Gewicht (kg)</label>
+                                    <input type="number" class="form-control" id="patient_weight" name="patient_weight" 
+                                           value="{{ form_data.patient_weight|default('') }}" min="0" max="500" step="0.1">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="patient_color" class="form-label">Farbe</label>
+                                    <input type="text" class="form-control" id="patient_color" name="patient_color" 
+                                           value="{{ form_data.patient_color|default('') }}">
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="patient_microchip" class="form-label">Mikrochip-Nummer</label>
+                                    <input type="text" class="form-control" id="patient_microchip" name="patient_microchip" 
+                                           value="{{ form_data.patient_microchip|default('') }}">
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="patient_notes" class="form-label">Notizen</label>
+                                    <textarea class="form-control" id="patient_notes" name="patient_notes" rows="3">{{ form_data.patient_notes|default('') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body d-flex justify-content-between">
+                            <a href="patients.php" class="btn btn-secondary">
+                                <i class="bx bx-arrow-back me-2"></i>Abbrechen
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bx bx-save me-2"></i>Speichern
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Bootstrap form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                // Check if at least email or phone is provided
+                var email = document.getElementById('owner_email').value;
+                var phone = document.getElementById('owner_phone').value;
+                
+                if (!email && !phone) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    alert('Bitte geben Sie mindestens eine Kontaktmöglichkeit (E-Mail oder Telefon) ein.');
+                    return false;
+                }
+                
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+
+<style>
+.card {
+    box-shadow: var(--bs-box-shadow-sm);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.card-title {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.form-control, .form-select {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--color-bg);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(123, 91, 190, 0.25);
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #6A4CAE, #A898C7);
+}
+</style>
+{% endblock %}
